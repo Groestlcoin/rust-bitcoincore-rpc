@@ -3,7 +3,7 @@ set -xe
 
 # Just echo all the relevant env vars to help debug Travis.
 echo "RUSTFMTCHECK: \"$RUSTFMTCHECK\""
-echo "BITCOINVERSION: \"$BITCOINVERSION\""
+echo "GROESTLCOINVERSION: \"$GROESTLCOINVERSION\""
 echo "PATH: \"$PATH\""
 
 
@@ -26,10 +26,10 @@ if [ -n "$RUSTFMTCHECK" ]; then
 fi
 
 # Integration test.
-if [ -n "$BITCOINVERSION" ]; then
-    wget https://bitcoincore.org/bin/bitcoin-core-$BITCOINVERSION/bitcoin-$BITCOINVERSION-x86_64-linux-gnu.tar.gz
-    tar -xzvf bitcoin-$BITCOINVERSION-x86_64-linux-gnu.tar.gz
-    export PATH=$PATH:$(pwd)/bitcoin-$BITCOINVERSION/bin
+if [ -n "$GROESTLCOINVERSION" ]; then
+    wget https://github.com/Groestlcoin/groestlcoin/releases/download/v$GROESTLCOINVERSION/groestlcoin-$GROESTLCOINVERSION-x86_64-linux-gnu.tar.gz
+    tar -xzvf groestlcoin-$GROESTLCOINVERSION-x86_64-linux-gnu.tar.gz
+    export PATH=$PATH:$(pwd)/groestlcoin-$GROESTLCOINVERSION/bin
     cd integration_test
     ./run.sh
     exit 0
@@ -39,4 +39,3 @@ else
   cargo test --verbose
   cargo build --verbose --examples
 fi
-

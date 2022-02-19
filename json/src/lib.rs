@@ -8,15 +8,15 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Rust Client for Bitcoin Core API
+//! # Rust Client for Groestlcoin Core API
 //!
-//! This is a client library for the Bitcoin Core JSON-RPC API.
+//! This is a client library for the Groestlcoin Core JSON-RPC API.
 //!
 
-#![crate_name = "bitcoincore_rpc_json"]
+#![crate_name = "groestlcoincore_rpc_json"]
 #![crate_type = "rlib"]
 
-pub extern crate bitcoin;
+pub extern crate groestlcoin;
 #[allow(unused)]
 #[macro_use] // `macro_use` is needed for v1.24.0 compilation.
 extern crate serde;
@@ -24,11 +24,11 @@ extern crate serde_json;
 
 use std::collections::HashMap;
 
-use bitcoin::consensus::encode;
-use bitcoin::hashes::hex::{FromHex, ToHex};
-use bitcoin::hashes::sha256;
-use bitcoin::util::{bip158, bip32};
-use bitcoin::{Address, Amount, PrivateKey, PublicKey, Script, SignedAmount, Transaction};
+use groestlcoin::consensus::encode;
+use groestlcoin::hashes::hex::{FromHex, ToHex};
+use groestlcoin::hashes::sha256;
+use groestlcoin::util::{bip158, bip32};
+use groestlcoin::{Address, Amount, PrivateKey, PublicKey, Script, SignedAmount, Transaction};
 use serde::de::Error as SerdeError;
 use serde::{Deserialize, Serialize};
 
@@ -38,7 +38,7 @@ use serde::{Deserialize, Serialize};
 ///
 /// The module is compatible with the serde attribute.
 pub mod serde_hex {
-    use bitcoin::hashes::hex::{FromHex, ToHex};
+    use groestlcoin::hashes::hex::{FromHex, ToHex};
     use serde::de::Error;
     use serde::{Deserializer, Serializer};
 
@@ -52,7 +52,7 @@ pub mod serde_hex {
     }
 
     pub mod opt {
-        use bitcoin::hashes::hex::{FromHex, ToHex};
+        use groestlcoin::hashes::hex::{FromHex, ToHex};
         use serde::de::Error;
         use serde::{Deserializer, Serializer};
 
@@ -100,17 +100,17 @@ pub struct GetNetworkInfoResult {
     pub time_offset: isize,
     pub connections: usize,
     /// The number of inbound connections
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub connections_in: Option<usize>,
     /// The number of outbound connections
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub connections_out: Option<usize>,
     #[serde(rename = "networkactive")]
     pub network_active: bool,
     pub networks: Vec<GetNetworkInfoResultNetwork>,
-    #[serde(rename = "relayfee", with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(rename = "relayfee", with = "groestlcoin::util::amount::serde::as_btc")]
     pub relay_fee: Amount,
-    #[serde(rename = "incrementalfee", with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(rename = "incrementalfee", with = "groestlcoin::util::amount::serde::as_btc")]
     pub incremental_fee: Amount,
     #[serde(rename = "localaddresses")]
     pub local_addresses: Vec<GetNetworkInfoResultAddress>,
@@ -136,11 +136,11 @@ pub struct GetWalletInfoResult {
     pub wallet_name: String,
     #[serde(rename = "walletversion")]
     pub wallet_version: u32,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub balance: Amount,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub unconfirmed_balance: Amount,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub immature_balance: Amount,
     #[serde(rename = "txcount")]
     pub tx_count: usize,
@@ -151,10 +151,10 @@ pub struct GetWalletInfoResult {
     #[serde(rename = "keypoolsize_hd_internal")]
     pub keypool_size_hd_internal: usize,
     pub unlocked_until: Option<u64>,
-    #[serde(rename = "paytxfee", with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(rename = "paytxfee", with = "groestlcoin::util::amount::serde::as_btc")]
     pub pay_tx_fee: Amount,
     #[serde(rename = "hdseedid")]
-    pub hd_seed_id: Option<bitcoin::XpubIdentifier>,
+    pub hd_seed_id: Option<groestlcoin::XpubIdentifier>,
     pub private_keys_enabled: bool,
     pub avoid_reuse: Option<bool>,
     pub scanning: Option<ScanningDetails>,
@@ -176,7 +176,7 @@ impl Eq for ScanningDetails {}
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetBlockResult {
-    pub hash: bitcoin::BlockHash,
+    pub hash: groestlcoin::BlockHash,
     pub confirmations: i32,
     pub size: usize,
     pub strippedsize: Option<usize>,
@@ -185,8 +185,8 @@ pub struct GetBlockResult {
     pub version: i32,
     #[serde(default, with = "::serde_hex::opt")]
     pub version_hex: Option<Vec<u8>>,
-    pub merkleroot: bitcoin::TxMerkleNode,
-    pub tx: Vec<bitcoin::Txid>,
+    pub merkleroot: groestlcoin::TxMerkleNode,
+    pub tx: Vec<groestlcoin::Txid>,
     pub time: usize,
     pub mediantime: Option<usize>,
     pub nonce: u32,
@@ -195,21 +195,21 @@ pub struct GetBlockResult {
     #[serde(with = "::serde_hex")]
     pub chainwork: Vec<u8>,
     pub n_tx: usize,
-    pub previousblockhash: Option<bitcoin::BlockHash>,
-    pub nextblockhash: Option<bitcoin::BlockHash>,
+    pub previousblockhash: Option<groestlcoin::BlockHash>,
+    pub nextblockhash: Option<groestlcoin::BlockHash>,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetBlockHeaderResult {
-    pub hash: bitcoin::BlockHash,
+    pub hash: groestlcoin::BlockHash,
     pub confirmations: i32,
     pub height: usize,
     pub version: i32,
     #[serde(default, with = "::serde_hex::opt")]
     pub version_hex: Option<Vec<u8>>,
     #[serde(rename = "merkleroot")]
-    pub merkle_root: bitcoin::TxMerkleNode,
+    pub merkle_root: groestlcoin::TxMerkleNode,
     pub time: usize,
     #[serde(rename = "mediantime")]
     pub median_time: Option<usize>,
@@ -220,9 +220,9 @@ pub struct GetBlockHeaderResult {
     pub chainwork: Vec<u8>,
     pub n_tx: usize,
     #[serde(rename = "previousblockhash")]
-    pub previous_block_hash: Option<bitcoin::BlockHash>,
+    pub previous_block_hash: Option<groestlcoin::BlockHash>,
     #[serde(rename = "nextblockhash")]
-    pub next_block_hash: Option<bitcoin::BlockHash>,
+    pub next_block_hash: Option<groestlcoin::BlockHash>,
 }
 
 #[derive(Clone, PartialEq, Debug, Deserialize, Serialize)]
@@ -264,7 +264,7 @@ pub struct GetRawTransactionResultVin {
     #[serde(default, with = "::serde_hex::opt")]
     pub coinbase: Option<Vec<u8>>,
     /// Not provided for coinbase txs.
-    pub txid: Option<bitcoin::Txid>,
+    pub txid: Option<groestlcoin::Txid>,
     /// Not provided for coinbase txs.
     pub vout: Option<u32>,
     /// The scriptSig in case of a non-coinbase tx.
@@ -304,7 +304,7 @@ impl GetRawTransactionResultVoutScriptPubKey {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetRawTransactionResultVout {
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub value: Amount,
     pub n: u32,
     pub script_pub_key: GetRawTransactionResultVoutScriptPubKey,
@@ -317,15 +317,15 @@ pub struct GetRawTransactionResult {
     pub in_active_chain: Option<bool>,
     #[serde(with = "::serde_hex")]
     pub hex: Vec<u8>,
-    pub txid: bitcoin::Txid,
-    pub hash: bitcoin::Wtxid,
+    pub txid: groestlcoin::Txid,
+    pub hash: groestlcoin::Wtxid,
     pub size: usize,
     pub vsize: usize,
     pub version: u32,
     pub locktime: u32,
     pub vin: Vec<GetRawTransactionResultVin>,
     pub vout: Vec<GetRawTransactionResultVout>,
-    pub blockhash: Option<bitcoin::BlockHash>,
+    pub blockhash: Option<groestlcoin::BlockHash>,
     pub confirmations: Option<u32>,
     pub time: Option<usize>,
     pub blocktime: Option<usize>,
@@ -333,7 +333,7 @@ pub struct GetRawTransactionResult {
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct GetBlockFilterResult {
-    pub header: bitcoin::FilterHash,
+    pub header: groestlcoin::FilterHash,
     #[serde(with = "::serde_hex")]
     pub filter: Vec<u8>,
 }
@@ -389,11 +389,11 @@ pub enum GetTransactionResultDetailCategory {
 pub struct GetTransactionResultDetail {
     pub address: Option<Address>,
     pub category: GetTransactionResultDetailCategory,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub amount: SignedAmount,
     pub label: Option<String>,
     pub vout: u32,
-    #[serde(default, with = "bitcoin::util::amount::serde::as_btc::opt")]
+    #[serde(default, with = "groestlcoin::util::amount::serde::as_btc::opt")]
     pub fee: Option<SignedAmount>,
     pub abandoned: Option<bool>,
 }
@@ -401,27 +401,27 @@ pub struct GetTransactionResultDetail {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize)]
 pub struct WalletTxInfo {
     pub confirmations: i32,
-    pub blockhash: Option<bitcoin::BlockHash>,
+    pub blockhash: Option<groestlcoin::BlockHash>,
     pub blockindex: Option<usize>,
     pub blocktime: Option<u64>,
     pub blockheight: Option<u32>,
-    pub txid: bitcoin::Txid,
+    pub txid: groestlcoin::Txid,
     pub time: u64,
     pub timereceived: u64,
     #[serde(rename = "bip125-replaceable")]
     pub bip125_replaceable: Bip125Replaceable,
     /// Conflicting transaction ids
     #[serde(rename = "walletconflicts")]
-    pub wallet_conflicts: Vec<bitcoin::Txid>,
+    pub wallet_conflicts: Vec<groestlcoin::Txid>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize)]
 pub struct GetTransactionResult {
     #[serde(flatten)]
     pub info: WalletTxInfo,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub amount: SignedAmount,
-    #[serde(default, with = "bitcoin::util::amount::serde::as_btc::opt")]
+    #[serde(default, with = "groestlcoin::util::amount::serde::as_btc::opt")]
     pub fee: Option<SignedAmount>,
     pub details: Vec<GetTransactionResultDetail>,
     #[serde(with = "::serde_hex")]
@@ -450,15 +450,15 @@ pub struct ListSinceBlockResult {
     pub transactions: Vec<ListTransactionResult>,
     #[serde(default)]
     pub removed: Vec<ListTransactionResult>,
-    pub lastblock: bitcoin::BlockHash,
+    pub lastblock: groestlcoin::BlockHash,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct GetTxOutResult {
-    pub bestblock: bitcoin::BlockHash,
+    pub bestblock: groestlcoin::BlockHash,
     pub confirmations: u32,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub value: Amount,
     pub script_pub_key: GetRawTransactionResultVoutScriptPubKey,
     pub coinbase: bool,
@@ -469,13 +469,13 @@ pub struct GetTxOutResult {
 pub struct ListUnspentQueryOptions {
     #[serde(
         rename = "minimumAmount",
-        with = "bitcoin::util::amount::serde::as_btc::opt",
+        with = "groestlcoin::util::amount::serde::as_btc::opt",
         skip_serializing_if = "Option::is_none"
     )]
     pub minimum_amount: Option<Amount>,
     #[serde(
         rename = "maximumAmount",
-        with = "bitcoin::util::amount::serde::as_btc::opt",
+        with = "groestlcoin::util::amount::serde::as_btc::opt",
         skip_serializing_if = "Option::is_none"
     )]
     pub maximum_amount: Option<Amount>,
@@ -483,7 +483,7 @@ pub struct ListUnspentQueryOptions {
     pub maximum_count: Option<usize>,
     #[serde(
         rename = "minimumSumAmount",
-        with = "bitcoin::util::amount::serde::as_btc::opt",
+        with = "groestlcoin::util::amount::serde::as_btc::opt",
         skip_serializing_if = "Option::is_none"
     )]
     pub minimum_sum_amount: Option<Amount>,
@@ -492,14 +492,14 @@ pub struct ListUnspentQueryOptions {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ListUnspentResultEntry {
-    pub txid: bitcoin::Txid,
+    pub txid: groestlcoin::Txid,
     pub vout: u32,
     pub address: Option<Address>,
     pub label: Option<String>,
     pub redeem_script: Option<Script>,
     pub witness_script: Option<Script>,
     pub script_pub_key: Script,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub amount: Amount,
     pub confirmations: u32,
     pub spendable: bool,
@@ -515,17 +515,17 @@ pub struct ListReceivedByAddressResult {
     #[serde(default, rename = "involvesWatchonly")]
     pub involved_watch_only: bool,
     pub address: Address,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub amount: Amount,
     pub confirmations: u32,
     pub label: String,
-    pub txids: Vec<bitcoin::Txid>,
+    pub txids: Vec<groestlcoin::Txid>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SignRawTransactionResultError {
-    pub txid: bitcoin::Txid,
+    pub txid: groestlcoin::Txid,
     pub vout: u32,
     pub script_sig: Script,
     pub sequence: u32,
@@ -549,22 +549,22 @@ impl SignRawTransactionResult {
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct TestMempoolAcceptResult {
-    pub txid: bitcoin::Txid,
+    pub txid: groestlcoin::Txid,
     pub allowed: bool,
     #[serde(rename = "reject-reason")]
     pub reject_reason: Option<String>,
     /// Virtual transaction size as defined in BIP 141 (only present when 'allowed' is true)
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub vsize: Option<u64>,
     /// Transaction fees (only present if 'allowed' is true)
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub fees: Option<TestMempoolAcceptResultFees>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct TestMempoolAcceptResultFees {
     /// Transaction fee in BTC
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub base: Amount,
     // unlike GetMempoolEntryResultFees, this only has the `base` fee
 }
@@ -658,7 +658,7 @@ pub struct GetAddressInfoResultEmbedded {
     #[serde(rename = "hdkeypath")]
     pub hd_key_path: Option<bip32::DerivationPath>,
     #[serde(rename = "hdseedid")]
-    pub hd_seed_id: Option<bitcoin::XpubIdentifier>,
+    pub hd_seed_id: Option<groestlcoin::XpubIdentifier>,
     #[serde(default)]
     pub labels: Vec<GetAddressInfoResultLabel>,
 }
@@ -712,7 +712,7 @@ pub struct GetAddressInfoResult {
     #[serde(rename = "hdkeypath")]
     pub hd_key_path: Option<bip32::DerivationPath>,
     #[serde(rename = "hdseedid")]
-    pub hd_seed_id: Option<bitcoin::XpubIdentifier>,
+    pub hd_seed_id: Option<groestlcoin::XpubIdentifier>,
     pub labels: Vec<GetAddressInfoResultLabel>,
     /// Deprecated in v0.20.0. See `labels` field instead.
     #[deprecated(note = "since Core v0.20.0")]
@@ -730,7 +730,7 @@ pub struct GetBlockchainInfoResult {
     pub headers: u64,
     /// The hash of the currently best block
     #[serde(rename = "bestblockhash")]
-    pub best_block_hash: bitcoin::BlockHash,
+    pub best_block_hash: groestlcoin::BlockHash,
     /// The current difficulty
     pub difficulty: f64,
     /// Median time for the current best block
@@ -794,35 +794,35 @@ pub struct GetMempoolEntryResult {
     #[serde(rename = "ancestorsize")]
     pub ancestor_size: u64,
     /// Hash of serialized transaction, including witness data
-    pub wtxid: bitcoin::Txid,
+    pub wtxid: groestlcoin::Txid,
     /// Fee information
     pub fees: GetMempoolEntryResultFees,
     /// Unconfirmed transactions used as inputs for this transaction
-    pub depends: Vec<bitcoin::Txid>,
+    pub depends: Vec<groestlcoin::Txid>,
     /// Unconfirmed transactions spending outputs from this transaction
     #[serde(rename = "spentby")]
-    pub spent_by: Vec<bitcoin::Txid>,
+    pub spent_by: Vec<groestlcoin::Txid>,
     /// Whether this transaction could be replaced due to BIP125 (replace-by-fee)
     #[serde(rename = "bip125-replaceable")]
     pub bip125_replaceable: bool,
     /// Whether this transaction is currently unbroadcast (initial broadcast not yet acknowledged by any peers)
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub unbroadcast: Option<bool>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct GetMempoolEntryResultFees {
     /// Transaction fee in BTC
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub base: Amount,
     /// Transaction fee with fee deltas used for mining priority in BTC
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub modified: Amount,
     /// Modified fees (see above) of in-mempool ancestors (including this one) in BTC
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub ancestor: Amount,
     /// Modified fees (see above) of in-mempool descendants (including this one) in BTC
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub descendant: Amount,
 }
 
@@ -853,7 +853,7 @@ impl<'a> serde::Serialize for ImportMultiRequestScriptPubkey<'a> {
 
 /// A import request for importmulti.
 ///
-/// Note: unlike in bitcoind, `timestamp` defaults to 0.
+/// Note: unlike in groestlcoind, `timestamp` defaults to 0.
 #[derive(Clone, PartialEq, Eq, Debug, Default, Serialize)]
 pub struct ImportMultiRequest<'a> {
     pub timestamp: ImportMultiRescanSince,
@@ -1000,7 +1000,7 @@ pub struct GetPeerInfoResult {
     // TODO: use a type for addrlocal
     pub addrlocal: Option<String>,
     /// Network (ipv4, ipv6, or onion) the peer connected through
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub network: Option<GetPeerInfoResultNetwork>,
     /// The services offered
     // TODO: use a type for services
@@ -1012,10 +1012,10 @@ pub struct GetPeerInfoResult {
     /// The time in seconds since epoch (Jan 1 1970 GMT) of the last receive
     pub lastrecv: u64,
     /// The time in seconds since epoch (Jan 1 1970 GMT) of the last valid transaction received from this peer
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub last_transaction: Option<u64>,
     /// The time in seconds since epoch (Jan 1 1970 GMT) of the last block received from this peer
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub last_block: Option<u64>,
     /// The total bytes sent
     pub bytessent: u64,
@@ -1039,12 +1039,12 @@ pub struct GetPeerInfoResult {
     pub inbound: bool,
     /// Whether connection was due to `addnode`/`-connect` or if it was an
     /// automatic/inbound connection
-    /// Deprecated in Bitcoin Core v0.21
+    /// Deprecated in Groestlcoin Core v2.21
     pub addnode: Option<bool>,
     /// The starting height (block) of the peer
     pub startingheight: i64,
     /// The ban score
-    /// Deprecated in Bitcoin Core v0.21
+    /// Deprecated in Groestlcoin Core v2.21
     pub banscore: Option<i64>,
     /// The last header we have in common with this peer
     pub synced_headers: i64,
@@ -1053,16 +1053,16 @@ pub struct GetPeerInfoResult {
     /// The heights of blocks we're currently asking from this peer
     pub inflight: Vec<u64>,
     /// Whether the peer is whitelisted
-    /// Deprecated in Bitcoin Core v0.21
+    /// Deprecated in Groestlcoin Core v2.21
     pub whitelisted: Option<bool>,
-    #[serde(rename = "minfeefilter", default, with = "bitcoin::util::amount::serde::as_btc::opt")]
+    #[serde(rename = "minfeefilter", default, with = "groestlcoin::util::amount::serde::as_btc::opt")]
     pub min_fee_filter: Option<Amount>,
     /// The total bytes sent aggregated by message type
     pub bytessent_per_msg: HashMap<String, u64>,
     /// The total bytes received aggregated by message type
     pub bytesrecv_per_msg: HashMap<String, u64>,
     /// The type of the connection
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     pub connection_type: Option<GetPeerInfoResultConnectionType>,
 }
 
@@ -1104,7 +1104,7 @@ pub struct GetAddedNodeInfoResult {
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct GetAddedNodeInfoResultAddress {
-    /// The bitcoin server IP and port we're connected to
+    /// The groestlcoin server IP and port we're connected to
     pub address: String,
     /// connection, inbound or outbound
     pub connected: GetAddedNodeInfoResultAddressType,
@@ -1144,7 +1144,7 @@ pub struct EstimateSmartFeeResult {
         default,
         rename = "feerate",
         skip_serializing_if = "Option::is_none",
-        with = "bitcoin::util::amount::serde::as_btc::opt"
+        with = "groestlcoin::util::amount::serde::as_btc::opt"
     )]
     pub fee_rate: Option<Amount>,
     /// Errors encountered during processing.
@@ -1156,7 +1156,7 @@ pub struct EstimateSmartFeeResult {
 /// Models the result of "waitfornewblock", and "waitforblock"
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct BlockRef {
-    pub hash: bitcoin::BlockHash,
+    pub hash: groestlcoin::BlockHash,
     pub height: u64,
 }
 
@@ -1220,7 +1220,7 @@ pub struct GetBlockTemplateResult {
     pub bits: Vec<u8>,
     /// The previous block hash the current template is mining on
     #[serde(rename = "previousblockhash")]
-    pub previous_block_hash: bitcoin::BlockHash,
+    pub previous_block_hash: groestlcoin::BlockHash,
     /// The current time as seen by the server (recommended for block time)
     /// Note: this is not necessarily the system clock, and must fall within
     /// the mintime/maxtime rules. Expressed as UNIX timestamp.
@@ -1241,7 +1241,7 @@ pub struct GetBlockTemplateResult {
     pub version: u32,
     /// Block rules that are to be enforced
     pub rules: Vec<GetBlockTemplateResultRules>,
-    /// List of features the Bitcoin Core getblocktemplate implementation supports
+    /// List of features the Groestlcoin Core getblocktemplate implementation supports
     pub capabilities: Vec<GetBlockTemplateResultCapabilities>,
     /// Set of pending, supported versionbit (BIP 9) softfork deployments
     #[serde(rename = "vbavailable")]
@@ -1254,13 +1254,13 @@ pub struct GetBlockTemplateResult {
     /// List of transactions included in the template block
     pub transactions: Vec<GetBlockTemplateResultTransaction>,
     /// The signet challenge. Only set if mining on a signet, otherwise empty
-    #[serde(default, with = "bitcoin::blockdata::script::Script")]
-    pub signet_challenge: bitcoin::blockdata::script::Script,
+    #[serde(default, with = "groestlcoin::blockdata::script::Script")]
+    pub signet_challenge: groestlcoin::blockdata::script::Script,
     /// The default witness commitment included in an OP_RETURN output of the
     /// coinbase transactions. Only set when mining on a network where SegWit
     /// is activated.
-    #[serde(with = "bitcoin::blockdata::script::Script", default)]
-    pub default_witness_commitment: bitcoin::blockdata::script::Script,
+    #[serde(with = "groestlcoin::blockdata::script::Script", default)]
+    pub default_witness_commitment: groestlcoin::blockdata::script::Script,
     /// Data that should be included in the coinbase's scriptSig content. Only
     /// the values (hexadecimal byte-for-byte) in this map should be included,
     /// not the keys. This does not include the block height, which is required
@@ -1269,7 +1269,7 @@ pub struct GetBlockTemplateResult {
     /// (which are counted toward limits, despite not being executed).
     pub coinbaseaux: HashMap<String, String>,
     /// Total funds available for the coinbase
-    #[serde(rename = "coinbasevalue", with = "bitcoin::util::amount::serde::as_sat", default)]
+    #[serde(rename = "coinbasevalue", with = "groestlcoin::util::amount::serde::as_sat", default)]
     pub coinbase_value: Amount,
     /// The number which valid hashes must be less than, in big-endian
     #[serde(with = "::serde_hex")]
@@ -1290,15 +1290,15 @@ pub struct GetBlockTemplateResult {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct GetBlockTemplateResultTransaction {
     /// The transaction id
-    pub txid: bitcoin::Txid,
+    pub txid: groestlcoin::Txid,
     /// The wtxid of the transaction
     #[serde(rename = "hash")]
-    pub wtxid: bitcoin::Wtxid,
+    pub wtxid: groestlcoin::Wtxid,
     /// The serilaized transaction bytes
     #[serde(with = "::serde_hex", rename = "data")]
     pub raw_tx: Vec<u8>,
     // The transaction fee
-    #[serde(with = "bitcoin::util::amount::serde::as_sat")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_sat")]
     pub fee: Amount,
     /// Transaction sigops
     pub sigops: u32,
@@ -1316,7 +1316,7 @@ impl GetBlockTemplateResultTransaction {
     }
 }
 
-/// Enum to represent Bitcoin Core's supported features for getblocktemplate
+/// Enum to represent Groestlcoin Core's supported features for getblocktemplate
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GetBlockTemplateResultCapabilities {
@@ -1324,7 +1324,7 @@ pub enum GetBlockTemplateResultCapabilities {
 }
 
 /// Enum to representing specific block rules that client must support to work
-/// with the template returned by Bitcoin Core
+/// with the template returned by Groestlcoin Core
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GetBlockTemplateResultRules {
@@ -1348,9 +1348,9 @@ pub enum GetBlockTemplateResultRules {
 }
 
 /// Enum to representing mutable parts of the block template. This does only
-/// cover the muations implemented in Bitcoin Core. More mutations are defined
+/// cover the muations implemented in Groestlcoin Core. More mutations are defined
 /// in [BIP-23](https://github.com/bitcoin/bips/blob/master/bip-0023.mediawiki#Mutations),
-/// but not implemented in the getblocktemplate implementation of Bitcoin Core.
+/// but not implemented in the getblocktemplate implementation of Groestlcoin Core.
 #[derive(Copy, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum GetBlockTemplateResulMutations {
@@ -1369,7 +1369,7 @@ pub enum GetBlockTemplateResulMutations {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct WalletCreateFundedPsbtResult {
     pub psbt: String,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub fee: Amount,
     #[serde(rename = "changepos")]
     pub change_position: i32,
@@ -1386,7 +1386,7 @@ pub struct WalletProcessPsbtResult {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize, Default)]
 pub struct WalletCreateFundedPsbtOptions {
     /// For a transaction with existing inputs, automatically include more if they are not enough (default true).
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     #[serde(skip_serializing_if = "Option::is_none")]
     pub add_inputs: Option<bool>,
     #[serde(rename = "changeAddress", skip_serializing_if = "Option::is_none")]
@@ -1402,7 +1402,7 @@ pub struct WalletCreateFundedPsbtOptions {
     #[serde(
         rename = "feeRate",
         skip_serializing_if = "Option::is_none",
-        with = "bitcoin::util::amount::serde::as_btc::opt"
+        with = "groestlcoin::util::amount::serde::as_btc::opt"
     )]
     pub fee_rate: Option<Amount>,
     #[serde(rename = "subtractFeeFromOutputs", skip_serializing_if = "Vec::is_empty")]
@@ -1433,11 +1433,11 @@ pub struct GetChainTipsResultTip {
     /// Block height of the chain tip
     pub height: u64,
     /// Header hash of the chain tip
-    pub hash: bitcoin::BlockHash,
+    pub hash: groestlcoin::BlockHash,
     /// Length of the branch (number of blocks since the last common block)
     #[serde(rename = "branchlen")]
     pub branch_length: usize,
-    /// Status of the tip as seen by Bitcoin Core
+    /// Status of the tip as seen by Groestlcoin Core
     pub status: GetChainTipsResultStatus,
 }
 
@@ -1475,12 +1475,12 @@ pub enum EstimateMode {
     Conservative,
 }
 
-/// A wrapper around bitcoin::SigHashType that will be serialized
+/// A wrapper around groestlcoin::SigHashType that will be serialized
 /// according to what the RPC expects.
-pub struct SigHashType(bitcoin::SigHashType);
+pub struct SigHashType(groestlcoin::SigHashType);
 
-impl From<bitcoin::SigHashType> for SigHashType {
-    fn from(sht: bitcoin::SigHashType) -> SigHashType {
+impl From<groestlcoin::SigHashType> for SigHashType {
+    fn from(sht: groestlcoin::SigHashType) -> SigHashType {
         SigHashType(sht)
     }
 }
@@ -1491,12 +1491,12 @@ impl serde::Serialize for SigHashType {
         S: serde::Serializer,
     {
         serializer.serialize_str(match self.0 {
-            bitcoin::SigHashType::All => "ALL",
-            bitcoin::SigHashType::None => "NONE",
-            bitcoin::SigHashType::Single => "SINGLE",
-            bitcoin::SigHashType::AllPlusAnyoneCanPay => "ALL|ANYONECANPAY",
-            bitcoin::SigHashType::NonePlusAnyoneCanPay => "NONE|ANYONECANPAY",
-            bitcoin::SigHashType::SinglePlusAnyoneCanPay => "SINGLE|ANYONECANPAY",
+            groestlcoin::SigHashType::All => "ALL",
+            groestlcoin::SigHashType::None => "NONE",
+            groestlcoin::SigHashType::Single => "SINGLE",
+            groestlcoin::SigHashType::AllPlusAnyoneCanPay => "ALL|ANYONECANPAY",
+            groestlcoin::SigHashType::NonePlusAnyoneCanPay => "NONE|ANYONECANPAY",
+            groestlcoin::SigHashType::SinglePlusAnyoneCanPay => "SINGLE|ANYONECANPAY",
         })
     }
 }
@@ -1505,7 +1505,7 @@ impl serde::Serialize for SigHashType {
 #[derive(Serialize, Clone, PartialEq, Eq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateRawTransactionInput {
-    pub txid: bitcoin::Txid,
+    pub txid: groestlcoin::Txid,
     pub vout: u32,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub sequence: Option<u32>,
@@ -1515,7 +1515,7 @@ pub struct CreateRawTransactionInput {
 #[serde(rename_all = "camelCase")]
 pub struct FundRawTransactionOptions {
     /// For a transaction with existing inputs, automatically include more if they are not enough (default true).
-    /// Added in Bitcoin Core v0.21
+    /// Added in Groestlcoin Core v2.21
     #[serde(rename = "add_inputs", skip_serializing_if = "Option::is_none")]
     pub add_inputs: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1529,7 +1529,7 @@ pub struct FundRawTransactionOptions {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub lock_unspents: Option<bool>,
     #[serde(
-        with = "bitcoin::util::amount::serde::as_btc::opt",
+        with = "groestlcoin::util::amount::serde::as_btc::opt",
         skip_serializing_if = "Option::is_none"
     )]
     pub fee_rate: Option<Amount>,
@@ -1548,7 +1548,7 @@ pub struct FundRawTransactionOptions {
 pub struct FundRawTransactionResult {
     #[serde(with = "::serde_hex")]
     pub hex: Vec<u8>,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub fee: Amount,
     #[serde(rename = "changepos")]
     pub change_position: i32,
@@ -1556,11 +1556,11 @@ pub struct FundRawTransactionResult {
 
 #[derive(Deserialize, Clone, PartialEq, Eq, Debug)]
 pub struct GetBalancesResultEntry {
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub trusted: Amount,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub untrusted_pending: Amount,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub immature: Amount,
 }
 
@@ -1581,7 +1581,7 @@ impl FundRawTransactionResult {
 #[derive(Serialize, Clone, PartialEq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct SignRawTransactionInput {
-    pub txid: bitcoin::Txid,
+    pub txid: groestlcoin::Txid,
     pub vout: u32,
     pub script_pub_key: Script,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -1589,7 +1589,7 @@ pub struct SignRawTransactionInput {
     #[serde(
         default,
         skip_serializing_if = "Option::is_none",
-        with = "bitcoin::util::amount::serde::as_btc::opt"
+        with = "groestlcoin::util::amount::serde::as_btc::opt"
     )]
     pub amount: Option<Amount>,
 }
@@ -1600,7 +1600,7 @@ pub struct GetTxOutSetInfoResult {
     pub height: u64,
     /// The hash of the block at the tip of the chain
     #[serde(rename = "bestblock")]
-    pub best_block: bitcoin::BlockHash,
+    pub best_block: groestlcoin::BlockHash,
     /// The number of transactions with unspent outputs
     pub transactions: u64,
     /// The number of unspent transaction outputs
@@ -1613,7 +1613,7 @@ pub struct GetTxOutSetInfoResult {
     /// The estimated size of the chainstate on disk
     pub disk_size: u64,
     /// The total amount
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub total_amount: Amount,
 }
 
@@ -1668,7 +1668,7 @@ pub enum PubKeyOrAddress<'a> {
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 #[serde(untagged)]
-/// Start a scan of the UTXO set for an [output descriptor](https://github.com/bitcoin/bitcoin/blob/master/doc/descriptors.md).
+/// Start a scan of the UTXO set for an [output descriptor](https://github.com/groestlcoin/groestlcoin/blob/master/doc/descriptors.md).
 pub enum ScanTxOutRequest {
     /// Scan for a single descriptor
     Single(String),
@@ -1688,22 +1688,22 @@ pub struct ScanTxOutResult {
     pub tx_outs: Option<u64>,
     pub height: Option<u64>,
     #[serde(rename = "bestblock")]
-    pub best_block_hash: Option<bitcoin::BlockHash>,
+    pub best_block_hash: Option<groestlcoin::BlockHash>,
     pub unspents: Vec<Utxo>,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
-    pub total_amount: bitcoin::Amount,
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub total_amount: groestlcoin::Amount,
 }
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, Eq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct Utxo {
-    pub txid: bitcoin::Txid,
+    pub txid: groestlcoin::Txid,
     pub vout: u32,
-    pub script_pub_key: bitcoin::Script,
+    pub script_pub_key: groestlcoin::Script,
     #[serde(rename = "desc")]
     pub descriptor: String,
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
-    pub amount: bitcoin::Amount,
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub amount: groestlcoin::Amount,
     pub height: u64,
 }
 
