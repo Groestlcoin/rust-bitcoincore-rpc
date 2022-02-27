@@ -10,9 +10,9 @@
 
 use std::{error, fmt, io};
 
-use bitcoin;
-use bitcoin::hashes::hex;
-use bitcoin::secp256k1;
+use groestlcoin;
+use groestlcoin::hashes::hex;
+use groestlcoin::secp256k1;
 use jsonrpc;
 use serde_json;
 
@@ -22,10 +22,10 @@ pub enum Error {
     JsonRpc(jsonrpc::error::Error),
     Hex(hex::Error),
     Json(serde_json::error::Error),
-    BitcoinSerialization(bitcoin::consensus::encode::Error),
+    BitcoinSerialization(groestlcoin::consensus::encode::Error),
     Secp256k1(secp256k1::Error),
     Io(io::Error),
-    InvalidAmount(bitcoin::util::amount::ParseAmountError),
+    InvalidAmount(groestlcoin::util::amount::ParseAmountError),
     InvalidCookieFile,
     /// The JSON result had an unexpected structure.
     UnexpectedStructure,
@@ -49,8 +49,8 @@ impl From<serde_json::error::Error> for Error {
     }
 }
 
-impl From<bitcoin::consensus::encode::Error> for Error {
-    fn from(e: bitcoin::consensus::encode::Error) -> Error {
+impl From<groestlcoin::consensus::encode::Error> for Error {
+    fn from(e: groestlcoin::consensus::encode::Error) -> Error {
         Error::BitcoinSerialization(e)
     }
 }
@@ -67,8 +67,8 @@ impl From<io::Error> for Error {
     }
 }
 
-impl From<bitcoin::util::amount::ParseAmountError> for Error {
-    fn from(e: bitcoin::util::amount::ParseAmountError) -> Error {
+impl From<groestlcoin::util::amount::ParseAmountError> for Error {
+    fn from(e: groestlcoin::util::amount::ParseAmountError) -> Error {
         Error::InvalidAmount(e)
     }
 }
@@ -79,7 +79,7 @@ impl fmt::Display for Error {
             Error::JsonRpc(ref e) => write!(f, "JSON-RPC error: {}", e),
             Error::Hex(ref e) => write!(f, "hex decode error: {}", e),
             Error::Json(ref e) => write!(f, "JSON error: {}", e),
-            Error::BitcoinSerialization(ref e) => write!(f, "Bitcoin serialization error: {}", e),
+            Error::BitcoinSerialization(ref e) => write!(f, "Groestlcoin serialization error: {}", e),
             Error::Secp256k1(ref e) => write!(f, "secp256k1 error: {}", e),
             Error::Io(ref e) => write!(f, "I/O error: {}", e),
             Error::InvalidAmount(ref e) => write!(f, "invalid amount: {}", e),
@@ -91,7 +91,7 @@ impl fmt::Display for Error {
 
 impl error::Error for Error {
     fn description(&self) -> &str {
-        "bitcoincore-rpc error"
+        "groestlcoincore-rpc error"
     }
 
     fn cause(&self) -> Option<&dyn error::Error> {

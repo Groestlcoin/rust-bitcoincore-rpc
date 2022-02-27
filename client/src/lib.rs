@@ -8,12 +8,12 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-//! # Rust Client for Bitcoin Core API
+//! # Rust Client for Groestlcoin Core API
 //!
-//! This is a client library for the Bitcoin Core JSON-RPC API.
+//! This is a client library for the Groestlcoin Core JSON-RPC API.
 //!
 
-#![crate_name = "bitcoincore_rpc"]
+#![crate_name = "groestlcoincore_rpc"]
 #![crate_type = "rlib"]
 
 #[macro_use]
@@ -25,9 +25,9 @@ extern crate serde_json;
 
 pub extern crate jsonrpc;
 
-pub extern crate bitcoincore_rpc_json;
-pub use bitcoincore_rpc_json as json;
-pub use json::bitcoin;
+pub extern crate groestlcoincore_rpc_json;
+pub use groestlcoincore_rpc_json as json;
+pub use json::groestlcoin;
 
 mod client;
 mod error;

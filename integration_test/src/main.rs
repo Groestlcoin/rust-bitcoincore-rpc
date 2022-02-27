@@ -1,4 +1,4 @@
-//! # rust-bitcoincore-rpc integration test
+//! # rust-groestlcoincore-rpc integration test
 //!
 //! The test methods are named to mention the methods tested.
 //! Individual test methods don't use any methods not tested before or
@@ -10,27 +10,27 @@
 
 #![deny(unused)]
 
-extern crate bitcoin;
-extern crate bitcoincore_rpc;
+extern crate groestlcoin;
+extern crate groestlcoincore_rpc;
 #[macro_use]
 extern crate lazy_static;
 extern crate log;
 
 use std::collections::HashMap;
 
-use bitcoincore_rpc::json;
-use bitcoincore_rpc::jsonrpc::error::Error as JsonRpcError;
-use bitcoincore_rpc::{Auth, Client, Error, RpcApi};
+use groestlcoincore_rpc::json;
+use groestlcoincore_rpc::jsonrpc::error::Error as JsonRpcError;
+use groestlcoincore_rpc::{Auth, Client, Error, RpcApi};
 
-use bitcoin::consensus::encode::{deserialize, serialize};
-use bitcoin::hashes::hex::{FromHex, ToHex};
-use bitcoin::hashes::Hash;
-use bitcoin::secp256k1;
-use bitcoin::{
+use groestlcoin::consensus::encode::{deserialize, serialize};
+use groestlcoin::hashes::hex::{FromHex, ToHex};
+use groestlcoin::hashes::Hash;
+use groestlcoin::secp256k1;
+use groestlcoin::{
     Address, Amount, Network, OutPoint, PrivateKey, Script, SigHashType, SignedAmount, Transaction,
     TxIn, TxOut, Txid,
 };
-use bitcoincore_rpc::bitcoincore_rpc_json::{
+use groestlcoincore_rpc::groestlcoincore_rpc_json::{
     GetBlockTemplateModes, GetBlockTemplateRules, ScanTxOutRequest,
 };
 
@@ -47,7 +47,7 @@ struct StdLogger;
 
 impl log::Log for StdLogger {
     fn enabled(&self, metadata: &log::Metadata) -> bool {
-        metadata.target().contains("jsonrpc") || metadata.target().contains("bitcoincore_rpc")
+        metadata.target().contains("jsonrpc") || metadata.target().contains("groestlcoincore_rpc")
     }
 
     fn log(&self, record: &log::Record) {
@@ -111,7 +111,7 @@ fn get_rpc_url() -> String {
     return std::env::var("RPC_URL").expect("RPC_URL must be set");
 }
 
-fn get_auth() -> bitcoincore_rpc::Auth {
+fn get_auth() -> groestlcoincore_rpc::Auth {
     if let Ok(cookie) = std::env::var("RPC_COOKIE") {
         return Auth::CookieFile(cookie.into());
     } else if let Ok(user) = std::env::var("RPC_USER") {
@@ -221,13 +221,13 @@ fn test_get_blockchain_info(cl: &Client) {
 
 fn test_get_new_address(cl: &Client) {
     let addr = cl.get_new_address(None, Some(json::AddressType::Legacy)).unwrap();
-    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2pkh));
+    assert_eq!(addr.address_type(), Some(groestlcoin::AddressType::P2pkh));
 
     let addr = cl.get_new_address(None, Some(json::AddressType::Bech32)).unwrap();
-    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2wpkh));
+    assert_eq!(addr.address_type(), Some(groestlcoin::AddressType::P2wpkh));
 
     let addr = cl.get_new_address(None, Some(json::AddressType::P2shSegwit)).unwrap();
-    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2sh));
+    assert_eq!(addr.address_type(), Some(groestlcoin::AddressType::P2sh));
 }
 
 fn test_dump_private_key(cl: &Client) {
@@ -237,17 +237,17 @@ fn test_dump_private_key(cl: &Client) {
 }
 
 fn test_generate(cl: &Client) {
-    if version() < 180000 {
+    if version() < 2180200 {
         let blocks = cl.generate(4, None).unwrap();
         assert_eq!(blocks.len(), 4);
         let blocks = cl.generate(6, Some(45)).unwrap();
         assert_eq!(blocks.len(), 6);
-    } else if version() < 190000 {
+    } else if version() < 2190100 {
         assert_deprecated!(cl.generate(5, None));
-    } else if version() < 210000 {
+    } else if version() < 2210000 {
         assert_not_found!(cl.generate(5, None));
     } else {
-        // Bitcoin Core v0.21 appears to return this with a generic -1 error code,
+        // Groestlcoin Core v2.21 appears to return this with a generic -1 error code,
         // rather than the expected -32601 code (RPC_METHOD_NOT_FOUND).
         assert_error_message!(cl.generate(5, None), -1, "replaced by the -generate cli option");
     }
@@ -262,7 +262,7 @@ fn test_get_balance_generate_to_address(cl: &Client) {
 }
 
 fn test_get_balances_generate_to_address(cl: &Client) {
-    if version() >= 190000 {
+    if version() >= 2190100 {
         let initial = cl.get_balances().unwrap();
 
         let blocks = cl.generate_to_address(500, &cl.get_new_address(None, None).unwrap()).unwrap();
@@ -328,7 +328,7 @@ fn test_get_address_info(cl: &Client) {
 fn test_set_label(cl: &Client) {
     let addr = cl.get_new_address(Some("label"), None).unwrap();
     let info = cl.get_address_info(&addr).unwrap();
-    if version() >= 0_20_00_00 {
+    if version() >= 2_20_00_00 {
         assert!(info.label.is_none());
         assert_eq!(info.labels[0], json::GetAddressInfoResultLabel::Simple("label".into()));
     } else {
@@ -344,7 +344,7 @@ fn test_set_label(cl: &Client) {
 
     cl.set_label(&addr, "other").unwrap();
     let info = cl.get_address_info(&addr).unwrap();
-    if version() >= 0_20_00_00 {
+    if version() >= 2_20_00_00 {
         assert!(info.label.is_none());
         assert_eq!(info.labels[0], json::GetAddressInfoResultLabel::Simple("other".into()));
     } else {

@@ -1,15 +1,14 @@
 
 set -xe
 
-# Just echo all the relevant env vars to help debug Travis.
-echo "TRAVIS_RUST_VERSION: \"$TRAVIS_RUST_VERSION\""
+# Just echo all the relevant env vars to help debug Github Actions.
 echo "RUSTFMTCHECK: \"$RUSTFMTCHECK\""
-echo "BITCOINVERSION: \"$BITCOINVERSION\""
+echo "GROESTLCOINVERSION: \"$GROESTLCOINVERSION\""
 echo "PATH: \"$PATH\""
 
 
-# Pin dependencies for Rust v1.29
-if [ "$TRAVIS_RUST_VERSION" = "1.29.0" ]; then
+# Pin dependencies for Rust v1.41
+if [ -n $"$PIN_VERSIONS" ]; then
     cargo generate-lockfile --verbose
 
     cargo update --verbose --package "log" --precise "0.4.13"
@@ -27,16 +26,16 @@ if [ -n "$RUSTFMTCHECK" ]; then
 fi
 
 # Integration test.
-if [ -n "$BITCOINVERSION" ]; then
-    wget https://bitcoincore.org/bin/bitcoin-core-$BITCOINVERSION/bitcoin-$BITCOINVERSION-x86_64-linux-gnu.tar.gz
-    tar -xzvf bitcoin-$BITCOINVERSION-x86_64-linux-gnu.tar.gz
-    export PATH=$PATH:$(pwd)/bitcoin-$BITCOINVERSION/bin
+if [ -n "$GROESTLCOINVERSION" ]; then
+    wget https://github.com/Groestlcoin/groestlcoin/releases/download/v$GROESTLCOINVERSION/groestlcoin-$GROESTLCOINVERSION-x86_64-linux-gnu.tar.gz
+    tar -xzvf groestlcoin-$GROESTLCOINVERSION-x86_64-linux-gnu.tar.gz
+    export PATH=$PATH:$(pwd)/groestlcoin-$GROESTLCOINVERSION/bin
     cd integration_test
     ./run.sh
     exit 0
+else
+  # Regular build/unit test.
+  cargo build --verbose
+  cargo test --verbose
+  cargo build --verbose --examples
 fi
-
-# Regular build/unit test.
-cargo build --verbose
-cargo test --verbose
-cargo build --verbose --examples
