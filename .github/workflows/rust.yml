@@ -1,0 +1,32 @@
+on: [push, pull_request]
+
+name: Continuous integration
+
+jobs:
+    tests:
+        name: Tests
+        runs-on: ubuntu-latest
+        strategy:
+            matrix:
+                include:
+                    - rust: stable
+                      env:
+                          RUSTFMTCHK: true
+                    - rust: nightly
+                      env:
+                          RUSTFMTCHK: false
+                    - rust: 1.41.0
+                      env:
+                          PIN_VERSIONS: true
+        steps:
+            - name: Checkout Crate
+              uses: actions/checkout@v2
+            - name: Checkout Toolchain
+              uses: actions-rs/toolchain@v1
+              with:
+                  profile: minimal
+                  toolchain: ${{ matrix.rust }}
+                  override: true
+            - name: Running test script
+              env: ${{ matrix.env }}
+              run: ./contrib/test.sh
