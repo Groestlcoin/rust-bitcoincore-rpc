@@ -5,6 +5,6 @@ authors = ["Groestlcoin Developers <groestlcoin@gmail.com>"]
 
 [dependencies]
 groestlcoincore-rpc = { path = "../client" }
-groestlcoin = { version = "0.27.1", features = [ "use-serde", "rand" ] }
+groestlcoin = { version = "0.28.0", features = [ "use-serde", "rand" ] }
 lazy_static = "1.4.0"
 log = "0.4"
