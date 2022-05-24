@@ -27,12 +27,13 @@ use groestlcoin::hashes::hex::{FromHex, ToHex};
 use groestlcoin::hashes::Hash;
 use groestlcoin::secp256k1;
 use groestlcoin::{
-    Address, Amount, Network, OutPoint, PrivateKey, Script, SigHashType, SignedAmount, Transaction,
-    TxIn, TxOut, Txid,
+    Address, Amount, Network, OutPoint, PrivateKey, Script, EcdsaSighashType, SignedAmount, Transaction,
+    TxIn, TxOut, Txid, Witness,
 };
 use groestlcoincore_rpc::groestlcoincore_rpc_json::{
     GetBlockTemplateModes, GetBlockTemplateRules, ScanTxOutRequest,
 };
+use json::BlockStatsFields as BsFields;
 
 lazy_static! {
     static ref SECP: secp256k1::Secp256k1<secp256k1::All> = secp256k1::Secp256k1::new();
@@ -147,6 +148,8 @@ fn main() {
     test_get_block_hash(&cl);
     test_get_block(&cl);
     test_get_block_header_get_block_header_info(&cl);
+    test_get_block_stats(&cl);
+    test_get_block_stats_fields(&cl);
     test_get_address_info(&cl);
     test_set_label(&cl);
     test_send_to_address(&cl);
@@ -203,6 +206,12 @@ fn main() {
     //TODO load_wallet(&self, wallet: &str) -> Result<json::LoadWalletResult> {
     //TODO unload_wallet(&self, wallet: Option<&str>) -> Result<()> {
     //TODO backup_wallet(&self, destination: Option<&str>) -> Result<()> {
+    test_add_node(&cl);
+    test_get_added_node_info(&cl);
+    test_get_node_addresses(&cl);
+    test_disconnect_node(&cl);
+    test_add_ban(&cl);
+    test_set_network_active(&cl);
     test_stop(cl);
 }
 
@@ -308,6 +317,28 @@ fn test_get_block_header_get_block_header_info(cl: &Client) {
     assert_eq!(info.confirmations, 1);
     assert_eq!(info.next_block_hash, None);
     assert!(info.previous_block_hash.is_some());
+}
+
+fn test_get_block_stats(cl: &Client) {
+    let tip = cl.get_block_count().unwrap();
+    let tip_hash = cl.get_best_block_hash().unwrap();
+    let header = cl.get_block_header(&tip_hash).unwrap();
+    let stats = cl.get_block_stats(tip).unwrap();
+    assert_eq!(header.block_hash(), stats.block_hash);
+    assert_eq!(header.time, stats.time as u32);
+    assert_eq!(tip, stats.height);
+}
+
+fn test_get_block_stats_fields(cl: &Client) {
+    let tip = cl.get_block_count().unwrap();
+    let tip_hash = cl.get_best_block_hash().unwrap();
+    let header = cl.get_block_header(&tip_hash).unwrap();
+    let fields = [BsFields::BlockHash, BsFields::Height, BsFields::TotalFee];
+    let stats = cl.get_block_stats_fields(tip, &fields).unwrap();
+    assert_eq!(header.block_hash(), stats.block_hash.unwrap());
+    assert_eq!(tip, stats.height.unwrap());
+    assert!(stats.total_fee.is_some());
+    assert!(stats.avg_fee.is_none());
 }
 
 fn test_get_address_info(cl: &Client) {
@@ -506,7 +537,7 @@ fn test_get_block_filter(cl: &Client) {
 fn test_sign_raw_transaction_with_send_raw_transaction(cl: &Client) {
     let sk = PrivateKey {
         network: Network::Regtest,
-        key: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
+        inner: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
         compressed: true,
     };
     let addr = Address::p2wpkh(&sk.public_key(&SECP), Network::Regtest).unwrap();
@@ -528,7 +559,7 @@ fn test_sign_raw_transaction_with_send_raw_transaction(cl: &Client) {
             },
             sequence: 0xFFFFFFFF,
             script_sig: Script::new(),
-            witness: Vec::new(),
+            witness: Witness::new(),
         }],
         output: vec![TxOut {
             value: (unspent.amount - *FEE).as_sat(),
@@ -557,7 +588,7 @@ fn test_sign_raw_transaction_with_send_raw_transaction(cl: &Client) {
             },
             script_sig: Script::new(),
             sequence: 0xFFFFFFFF,
-            witness: Vec::new(),
+            witness: Witness::new(),
         }],
         output: vec![TxOut {
             value: (unspent.amount - *FEE - *FEE).as_sat(),
@@ -566,7 +597,7 @@ fn test_sign_raw_transaction_with_send_raw_transaction(cl: &Client) {
     };
 
     let res =
-        cl.sign_raw_transaction_with_key(&tx, &[sk], None, Some(SigHashType::All.into())).unwrap();
+        cl.sign_raw_transaction_with_key(&tx, &[sk], None, Some(EcdsaSighashType::All.into())).unwrap();
     assert!(res.complete);
     let _ = cl.send_raw_transaction(&res.transaction().unwrap()).unwrap();
 }
@@ -815,7 +846,7 @@ fn test_list_received_by_address(cl: &Client) {
 fn test_import_public_key(cl: &Client) {
     let sk = PrivateKey {
         network: Network::Regtest,
-        key: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
+        inner: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
         compressed: true,
     };
     cl.import_public_key(&sk.public_key(&SECP), None, None).unwrap();
@@ -826,7 +857,7 @@ fn test_import_public_key(cl: &Client) {
 fn test_import_priv_key(cl: &Client) {
     let sk = PrivateKey {
         network: Network::Regtest,
-        key: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
+        inner: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
         compressed: true,
     };
     cl.import_private_key(&sk, None, None).unwrap();
@@ -837,7 +868,7 @@ fn test_import_priv_key(cl: &Client) {
 fn test_import_address(cl: &Client) {
     let sk = PrivateKey {
         network: Network::Regtest,
-        key: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
+        inner: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
         compressed: true,
     };
     let addr = Address::p2pkh(&sk.public_key(&SECP), Network::Regtest);
@@ -849,7 +880,7 @@ fn test_import_address(cl: &Client) {
 fn test_import_address_script(cl: &Client) {
     let sk = PrivateKey {
         network: Network::Regtest,
-        key: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
+        inner: secp256k1::SecretKey::new(&mut secp256k1::rand::thread_rng()),
         compressed: true,
     };
     let addr = Address::p2pkh(&sk.public_key(&SECP), Network::Regtest);
@@ -1005,6 +1036,61 @@ fn test_get_tx_out_set_info(cl: &Client) {
 fn test_get_chain_tips(cl: &Client) {
     let tips = cl.get_chain_tips().unwrap();
     assert_eq!(tips.len(), 1);
+}
+
+fn test_add_node(cl: &Client) {
+    cl.add_node("127.0.0.1:1234").unwrap();
+    assert_error_message!(cl.add_node("127.0.0.1:1234"), -23, "Error: Node already added");
+    cl.remove_node("127.0.0.1:1234").unwrap();
+    cl.onetry_node("127.0.0.1:1234").unwrap();
+}
+
+fn test_get_added_node_info(cl: &Client) {
+    cl.add_node("127.0.0.1:1234").unwrap();
+    let added_info = cl.get_added_node_info(None).unwrap();
+    assert_eq!(added_info.len(), 1);
+}
+
+fn test_get_node_addresses(cl: &Client) {
+    cl.get_node_addresses(None).unwrap();
+}
+
+fn test_disconnect_node(cl: &Client) {
+    assert_error_message!(
+        cl.disconnect_node("127.0.0.1:1234"),
+        -29,
+        "Node not found in connected nodes"
+    );
+    assert_error_message!(cl.disconnect_node_by_id(1), -29, "Node not found in connected nodes");
+}
+
+fn test_add_ban(cl: &Client) {
+    cl.add_ban("127.0.0.1", 0, false).unwrap();
+    let res = cl.list_banned().unwrap();
+    assert_eq!(res.len(), 1);
+
+    cl.remove_ban("127.0.0.1").unwrap();
+    let res = cl.list_banned().unwrap();
+    assert_eq!(res.len(), 0);
+
+    cl.add_ban("127.0.0.1", 0, false).unwrap();
+    let res = cl.list_banned().unwrap();
+    assert_eq!(res.len(), 1);
+
+    cl.clear_banned().unwrap();
+    let res = cl.list_banned().unwrap();
+    assert_eq!(res.len(), 0);
+
+    assert_error_message!(
+        cl.add_ban("INVALID_STRING", 0, false),
+        -30,
+        "Error: Invalid IP/Subnet"
+    );
+}
+
+fn test_set_network_active(cl: &Client) {
+    cl.set_network_active(false).unwrap();
+    cl.set_network_active(true).unwrap();
 }
 
 fn test_get_net_totals(cl: &Client) {
