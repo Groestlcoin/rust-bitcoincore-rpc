@@ -24,7 +24,7 @@ use groestlcoincore_rpc::{Auth, Client, RpcApi};
 
 fn main() {
 
-    let rpc = Client::new("http://localhost:1441".to_string(),
+    let rpc = Client::new("http://localhost:1441",
                           Auth::UserPass("<FILL RPC USERNAME>".to_string(),
                                          "<FILL RPC PASSWORD>".to_string())).unwrap();
     let best_block_hash = rpc.get_best_block_hash().unwrap();
@@ -42,16 +42,4 @@ The following versions are officially supported and automatically tested:
 * 2.21.0
 
 # Minimum Supported Rust Version (MSRV)
-This library should always compile with any combination of features on **Rust 1.41**.
-
-Because some dependencies have broken the build in minor/patch releases, to
-compile with 1.41.0 you will need to run the following version-pinning command:
-```
-cargo update --package "cc" --precise "1.0.41"
-cargo update --package "log:0.4.x" --precise "0.4.13" # x being the highest patch version, currently 14
-cargo update --package "cfg-if" --precise "0.1.9"
-cargo update --package "serde_json" --precise "1.0.39"
-cargo update --package "serde" --precise "1.0.98"
-cargo update --package "serde_derive" --precise "1.0.98"
-cargo update --package "byteorder" --precise "1.3.4"
-```
+This library should always compile with any combination of features on **Rust 1.41.1**.

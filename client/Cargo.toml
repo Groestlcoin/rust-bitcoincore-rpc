@@ -1,6 +1,6 @@
 [package]
 name = "groestlcoincore-rpc"
-version = "0.15.0"
+version = "0.16.0"
 authors = ["Groestlcoin Developers <groestlcoin@gmail.com>"]
 license = "CC0-1.0"
 homepage = "https://github.com/Groestlcoin/rust-groestlcoincore-rpc/"
@@ -8,13 +8,14 @@ repository = "https://github.com/Groestlcoin/rust-groestlcoincore-rpc/"
 description = "RPC client library for the Groestlcoin Core JSON-RPC API."
 keywords = ["crypto", "groestlcoin", "groestlcoin-core", "rpc"]
 readme = "README.md"
+edition = "2018"
 
 [lib]
 name = "groestlcoincore_rpc"
 path = "src/lib.rs"
 
 [dependencies]
-groestlcoincore-rpc-json = { version = "0.15.0", path = "../json" }
+groestlcoincore-rpc-json = { version = "0.16.0", path = "../json" }
 
 log = "0.4.5"
 jsonrpc = "0.12.0"

@@ -146,7 +146,7 @@ pub struct GetWalletInfoResult {
     #[serde(rename = "txcount")]
     pub tx_count: usize,
     #[serde(rename = "keypoololdest")]
-    pub keypool_oldest: usize,
+    pub keypool_oldest: Option<usize>,
     #[serde(rename = "keypoolsize")]
     pub keypool_size: usize,
     #[serde(rename = "keypoolsize_hd_internal")]
@@ -184,7 +184,7 @@ pub struct GetBlockResult {
     pub weight: usize,
     pub height: usize,
     pub version: i32,
-    #[serde(default, with = "::serde_hex::opt")]
+    #[serde(default, with = "crate::serde_hex::opt")]
     pub version_hex: Option<Vec<u8>>,
     pub merkleroot: groestlcoin::TxMerkleNode,
     pub tx: Vec<groestlcoin::Txid>,
@@ -193,7 +193,7 @@ pub struct GetBlockResult {
     pub nonce: u32,
     pub bits: String,
     pub difficulty: f64,
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub chainwork: Vec<u8>,
     pub n_tx: usize,
     pub previousblockhash: Option<groestlcoin::BlockHash>,
@@ -207,7 +207,7 @@ pub struct GetBlockHeaderResult {
     pub confirmations: i32,
     pub height: usize,
     pub version: i32,
-    #[serde(default, with = "::serde_hex::opt")]
+    #[serde(default, with = "crate::serde_hex::opt")]
     pub version_hex: Option<Vec<u8>>,
     #[serde(rename = "merkleroot")]
     pub merkle_root: groestlcoin::TxMerkleNode,
@@ -217,7 +217,7 @@ pub struct GetBlockHeaderResult {
     pub nonce: u32,
     pub bits: String,
     pub difficulty: f64,
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub chainwork: Vec<u8>,
     pub n_tx: usize,
     #[serde(rename = "previousblockhash")]
@@ -505,7 +505,7 @@ pub struct GetMiningInfoResult {
 #[serde(rename_all = "camelCase")]
 pub struct GetRawTransactionResultVinScriptSig {
     pub asm: String,
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub hex: Vec<u8>,
 }
 
@@ -520,7 +520,7 @@ impl GetRawTransactionResultVinScriptSig {
 pub struct GetRawTransactionResultVin {
     pub sequence: u32,
     /// The raw scriptSig in case of a coinbase tx.
-    #[serde(default, with = "::serde_hex::opt")]
+    #[serde(default, with = "crate::serde_hex::opt")]
     pub coinbase: Option<Vec<u8>>,
     /// Not provided for coinbase txs.
     pub txid: Option<groestlcoin::Txid>,
@@ -546,7 +546,7 @@ impl GetRawTransactionResultVin {
 #[serde(rename_all = "camelCase")]
 pub struct GetRawTransactionResultVoutScriptPubKey {
     pub asm: String,
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub hex: Vec<u8>,
     pub req_sigs: Option<usize>,
     #[serde(rename = "type")]
@@ -574,7 +574,7 @@ pub struct GetRawTransactionResultVout {
 pub struct GetRawTransactionResult {
     #[serde(rename = "in_active_chain")]
     pub in_active_chain: Option<bool>,
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub hex: Vec<u8>,
     pub txid: groestlcoin::Txid,
     pub hash: groestlcoin::Wtxid,
@@ -593,7 +593,7 @@ pub struct GetRawTransactionResult {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct GetBlockFilterResult {
     pub header: groestlcoin::FilterHash,
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub filter: Vec<u8>,
 }
 
@@ -683,7 +683,7 @@ pub struct GetTransactionResult {
     #[serde(default, with = "groestlcoin::util::amount::serde::as_btc::opt")]
     pub fee: Option<SignedAmount>,
     pub details: Vec<GetTransactionResultDetail>,
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub hex: Vec<u8>,
 }
 
@@ -794,7 +794,7 @@ pub struct SignRawTransactionResultError {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SignRawTransactionResult {
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub hex: Vec<u8>,
     pub complete: bool,
     pub errors: Option<Vec<SignRawTransactionResultError>>,
@@ -901,11 +901,11 @@ pub struct GetAddressInfoResultEmbedded {
     #[serde(rename = "is_witness")]
     pub is_witness: Option<bool>,
     pub witness_version: Option<u32>,
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub witness_program: Vec<u8>,
     pub script: Option<ScriptPubkeyType>,
     /// The redeemscript for the p2sh address.
-    #[serde(default, with = "::serde_hex::opt")]
+    #[serde(default, with = "crate::serde_hex::opt")]
     pub hex: Option<Vec<u8>>,
     pub pubkeys: Option<Vec<PublicKey>>,
     #[serde(rename = "sigsrequired")]
@@ -953,11 +953,11 @@ pub struct GetAddressInfoResult {
     #[serde(rename = "iswitness")]
     pub is_witness: Option<bool>,
     pub witness_version: Option<u32>,
-    #[serde(default, with = "::serde_hex::opt")]
+    #[serde(default, with = "crate::serde_hex::opt")]
     pub witness_program: Option<Vec<u8>>,
     pub script: Option<ScriptPubkeyType>,
     /// The redeemscript for the p2sh address.
-    #[serde(default, with = "::serde_hex::opt")]
+    #[serde(default, with = "crate::serde_hex::opt")]
     pub hex: Option<Vec<u8>>,
     pub pubkeys: Option<Vec<PublicKey>>,
     #[serde(rename = "sigsrequired")]
@@ -1002,7 +1002,7 @@ pub struct GetBlockchainInfoResult {
     #[serde(rename = "initialblockdownload")]
     pub initial_block_download: bool,
     /// Total amount of work in active chain, in hexadecimal
-    #[serde(rename = "chainwork", with = "::serde_hex")]
+    #[serde(rename = "chainwork", with = "crate::serde_hex")]
     pub chain_work: Vec<u8>,
     /// The estimated size of the block and undo files on disk
     pub size_on_disk: u64,
@@ -1474,7 +1474,7 @@ pub enum GetBlockTemplateModes {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct GetBlockTemplateResult {
     /// The compressed difficulty in hexadecimal
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub bits: Vec<u8>,
     /// The previous block hash the current template is mining on
     #[serde(rename = "previousblockhash")]
@@ -1530,7 +1530,7 @@ pub struct GetBlockTemplateResult {
     #[serde(rename = "coinbasevalue", with = "groestlcoin::util::amount::serde::as_sat", default)]
     pub coinbase_value: Amount,
     /// The number which valid hashes must be less than, in big-endian
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub target: Vec<u8>,
     /// The minimum timestamp appropriate for the next block time. Expressed as
     /// UNIX timestamp.
@@ -1540,7 +1540,7 @@ pub struct GetBlockTemplateResult {
     /// block
     pub mutable: Vec<GetBlockTemplateResulMutations>,
     /// A range of valid nonces
-    #[serde(with = "::serde_hex", rename = "noncerange")]
+    #[serde(with = "crate::serde_hex", rename = "noncerange")]
     pub nonce_range: Vec<u8>,
 }
 
@@ -1553,7 +1553,7 @@ pub struct GetBlockTemplateResultTransaction {
     #[serde(rename = "hash")]
     pub wtxid: groestlcoin::Wtxid,
     /// The serilaized transaction bytes
-    #[serde(with = "::serde_hex", rename = "data")]
+    #[serde(with = "crate::serde_hex", rename = "data")]
     pub raw_tx: Vec<u8>,
     // The transaction fee
     #[serde(with = "groestlcoin::util::amount::serde::as_sat")]
@@ -1677,7 +1677,7 @@ pub struct WalletCreateFundedPsbtOptions {
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct FinalizePsbtResult {
     pub psbt: Option<String>,
-    #[serde(default, with = "::serde_hex::opt")]
+    #[serde(default, with = "crate::serde_hex::opt")]
     pub hex: Option<Vec<u8>>,
     pub complete: bool,
 }
@@ -1804,7 +1804,7 @@ pub struct FundRawTransactionOptions {
 #[derive(Deserialize, Clone, PartialEq, Eq, Debug)]
 #[serde(rename_all = "camelCase")]
 pub struct FundRawTransactionResult {
-    #[serde(with = "::serde_hex")]
+    #[serde(with = "crate::serde_hex")]
     pub hex: Vec<u8>,
     #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub fee: Amount,
@@ -1852,27 +1852,96 @@ pub struct SignRawTransactionInput {
     pub amount: Option<Amount>,
 }
 
+/// Used to represent UTXO set hash type
+#[derive(Clone, Serialize, PartialEq, Eq, Debug)]
+#[serde(rename_all = "snake_case")]
+pub enum TxOutSetHashType {
+    HashSerialized2,
+    Muhash,
+    None,
+}
+
+/// Used to specify a block hash or a height
+#[derive(Clone, Serialize, PartialEq, Eq, Debug)]
+#[serde(untagged)]
+pub enum HashOrHeight {
+    BlockHash(groestlcoin::BlockHash),
+    Height(u64),
+}
+
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct GetTxOutSetInfoResult {
-    /// The current block height (index)
+    /// The block height (index) of the returned statistics
     pub height: u64,
-    /// The hash of the block at the tip of the chain
+    /// The hash of the block at which these statistics are calculated
     #[serde(rename = "bestblock")]
     pub best_block: groestlcoin::BlockHash,
-    /// The number of transactions with unspent outputs
-    pub transactions: u64,
+    /// The number of transactions with unspent outputs (not available when coinstatsindex is used)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub transactions: Option<u64>,
     /// The number of unspent transaction outputs
     #[serde(rename = "txouts")]
     pub tx_outs: u64,
     /// A meaningless metric for UTXO set size
     pub bogosize: u64,
-    /// The serialized hash
-    pub hash_serialized_2: sha256::Hash,
-    /// The estimated size of the chainstate on disk
-    pub disk_size: u64,
+    /// The serialized hash (only present if 'hash_serialized_2' hash_type is chosen)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub hash_serialized_2: Option<sha256::Hash>,
+    /// The serialized hash (only present if 'muhash' hash_type is chosen)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub muhash: Option<sha256::Hash>,
+    /// The estimated size of the chainstate on disk (not available when coinstatsindex is used)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub disk_size: Option<u64>,
     /// The total amount
     #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub total_amount: Amount,
+    /// The total amount of coins permanently excluded from the UTXO set (only available if coinstatsindex is used)
+    #[serde(
+        default,
+        skip_serializing_if = "Option::is_none",
+        with = "groestlcoin::util::amount::serde::as_btc::opt"
+    )]
+    pub total_unspendable_amount: Option<Amount>,
+    /// Info on amounts in the block at this block height (only available if coinstatsindex is used)
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub block_info: Option<BlockInfo>,
+}
+
+/// Info on amounts in the block at the block height of the `gettxoutsetinfo` call (only available if coinstatsindex is used)
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+pub struct BlockInfo {
+    /// Amount of previous outputs spent
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub prevout_spent: Amount,
+    /// Output size of the coinbase transaction
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub coinbase: Amount,
+    /// Newly-created outputs
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub new_outputs_ex_coinbase: Amount,
+    /// Amount of unspendable outputs
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub unspendable: Amount,
+    /// Detailed view of the unspendable categories
+    pub unspendables: Unspendables,
+}
+
+/// Detailed view of the unspendable categories
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+pub struct Unspendables {
+    /// Unspendable coins from the Genesis block
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub genesis_block: Amount,
+    /// Transactions overridden by duplicates (no longer possible with BIP30)
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub bip30: Amount,
+    /// Amounts sent to scripts that are unspendable (for example OP_RETURN outputs)
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub scripts: Amount,
+    /// Fee rewards that miners did not claim in their coinbase transaction
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
+    pub unclaimed_rewards: Amount,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]

@@ -8,11 +8,11 @@
 // If not, see <http://creativecommons.org/publicdomain/zero/1.0/>.
 //
 
-use groestlcoin;
+use crate::groestlcoin;
 use serde_json;
 
-use client::Result;
-use client::RpcApi;
+use crate::client::Result;
+use crate::client::RpcApi;
 
 /// A type that can be queried from Groestlcoin Core.
 pub trait Queryable<C: RpcApi>: Sized {
@@ -44,7 +44,7 @@ impl<C: RpcApi> Queryable<C> for groestlcoin::blockdata::transaction::Transactio
     }
 }
 
-impl<C: RpcApi> Queryable<C> for Option<::json::GetTxOutResult> {
+impl<C: RpcApi> Queryable<C> for Option<crate::json::GetTxOutResult> {
     type Id = groestlcoin::OutPoint;
 
     fn query(rpc: &C, id: &Self::Id) -> Result<Self> {

@@ -10,9 +10,9 @@
 
 use std::{error, fmt, io};
 
-use groestlcoin;
-use groestlcoin::hashes::hex;
-use groestlcoin::secp256k1;
+use crate::groestlcoin;
+use crate::groestlcoin::hashes::hex;
+use crate::groestlcoin::secp256k1;
 use jsonrpc;
 use serde_json;
 
@@ -29,6 +29,8 @@ pub enum Error {
     InvalidCookieFile,
     /// The JSON result had an unexpected structure.
     UnexpectedStructure,
+    /// The daemon returned an error string.
+    ReturnedError(String),
 }
 
 impl From<jsonrpc::error::Error> for Error {
@@ -85,6 +87,7 @@ impl fmt::Display for Error {
             Error::InvalidAmount(ref e) => write!(f, "invalid amount: {}", e),
             Error::InvalidCookieFile => write!(f, "invalid cookie file"),
             Error::UnexpectedStructure => write!(f, "the JSON result had an unexpected structure"),
+            Error::ReturnedError(ref s) => write!(f, "the daemon returned an error string: {}", s),
         }
     }
 }

@@ -14,21 +14,21 @@ use std::iter::FromIterator;
 use std::path::PathBuf;
 use std::{fmt, result};
 
-use groestlcoin;
+use crate::groestlcoin;
 use jsonrpc;
 use serde;
 use serde_json;
 
-use groestlcoin::hashes::hex::{FromHex, ToHex};
-use groestlcoin::secp256k1::ecdsa::Signature;
-use groestlcoin::{
+use crate::groestlcoin::hashes::hex::{FromHex, ToHex};
+use crate::groestlcoin::secp256k1::ecdsa::Signature;
+use crate::groestlcoin::{
     Address, Amount, Block, BlockHeader, OutPoint, PrivateKey, PublicKey, Script, Transaction,
 };
 use log::Level::{Debug, Trace, Warn};
 
-use error::*;
-use json;
-use queryable;
+use crate::error::*;
+use crate::json;
+use crate::queryable;
 
 /// Crate-specific Result type, shorthand for `std::result::Result` with our
 /// crate-specific Error type;
@@ -382,7 +382,7 @@ pub trait RpcApi: Sized {
         // - 0.18.x returns a "softforks" array and a "bip9_softforks" map.
         // - 0.19.x returns a "softforks" map.
         Ok(if self.version()? < 190000 {
-            use Error::UnexpectedStructure as err;
+            use crate::Error::UnexpectedStructure as err;
 
             // First, remove both incompatible softfork fields.
             // We need to scope the mutable ref here for v1.29 borrowck.
@@ -730,7 +730,7 @@ pub trait RpcApi: Sized {
         replaceable: Option<bool>,
     ) -> Result<String> {
         let outs_converted = serde_json::Map::from_iter(
-            outs.iter().map(|(k, v)| (k.clone(), serde_json::Value::from(v.as_btc()))),
+            outs.iter().map(|(k, v)| (k.clone(), serde_json::Value::from(v.to_btc()))),
         );
         let mut args = [
             into_json(utxos)?,
@@ -903,7 +903,7 @@ pub trait RpcApi: Sized {
     ) -> Result<groestlcoin::Txid> {
         let mut args = [
             address.to_string().into(),
-            into_json(amount.as_btc())?,
+            into_json(amount.to_btc())?,
             opt_into_json(comment)?,
             opt_into_json(comment_to)?,
             opt_into_json(subtract_fee)?,
@@ -1061,7 +1061,7 @@ pub trait RpcApi: Sized {
         bip32derivs: Option<bool>,
     ) -> Result<json::WalletCreateFundedPsbtResult> {
         let outputs_converted = serde_json::Map::from_iter(
-            outputs.iter().map(|(k, v)| (k.clone(), serde_json::Value::from(v.as_btc()))),
+            outputs.iter().map(|(k, v)| (k.clone(), serde_json::Value::from(v.to_btc()))),
         );
         let mut args = [
             into_json(inputs)?,
@@ -1133,9 +1133,16 @@ pub trait RpcApi: Sized {
     }
 
     /// Returns statistics about the unspent transaction output set.
-    /// This call may take some time.
-    fn get_tx_out_set_info(&self) -> Result<json::GetTxOutSetInfoResult> {
-        self.call("gettxoutsetinfo", &[])
+    /// Note this call may take some time if you are not using coinstatsindex.
+    fn get_tx_out_set_info(
+        &self,
+        hash_type: Option<json::TxOutSetHashType>,
+        hash_or_height: Option<json::HashOrHeight>,
+        use_index: Option<bool>,
+    ) -> Result<json::GetTxOutSetInfoResult> {
+        let mut args =
+            [opt_into_json(hash_type)?, opt_into_json(hash_or_height)?, opt_into_json(use_index)?];
+        self.call("gettxoutsetinfo", handle_defaults(&mut args, &[null(), null(), null()]))
     }
 
     /// Returns information about network traffic, including bytes in, bytes out,
@@ -1153,6 +1160,27 @@ pub trait RpcApi: Sized {
     /// Returns the total uptime of the server in seconds
     fn uptime(&self) -> Result<u64> {
         self.call("uptime", &[])
+    }
+
+    /// Submit a block
+    fn submit_block(&self, block: &bitcoin::Block) -> Result<()> {
+        let block_hex: String = bitcoin::consensus::encode::serialize_hex(block);
+        self.submit_block_hex(&block_hex)
+    }
+
+    /// Submit a raw block
+    fn submit_block_bytes(&self, block_bytes: &[u8]) -> Result<()> {
+        let block_hex: String = block_bytes.to_hex();
+        self.submit_block_hex(&block_hex)
+    }
+
+    /// Submit a block as a hex string
+    fn submit_block_hex(&self, block_hex: &str) -> Result<()> {
+        match self.call("submitblock", &[into_json(&block_hex)?]) {
+            Ok(serde_json::Value::Null) => Ok(()),
+            Ok(res) => Err(Error::ReturnedError(res.to_string())),
+            Err(err) => Err(err.into()),
+        }
     }
 
     fn scan_tx_out_set_blocking(
@@ -1256,12 +1284,12 @@ fn log_response(cmd: &str, resp: &Result<jsonrpc::Response>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use groestlcoin;
+    use crate::groestlcoin;
     use serde_json;
 
     #[test]
     fn test_raw_tx() {
-        use groestlcoin::consensus::encode;
+        use crate::groestlcoin::consensus::encode;
         let client = Client::new("http://localhost/".into(), Auth::None).unwrap();
         let tx: groestlcoin::Transaction = encode::deserialize(&Vec::<u8>::from_hex("0200000001586bd02815cf5faabfec986a4e50d25dbee089bd2758621e61c5fab06c334af0000000006b483045022100e85425f6d7c589972ee061413bcf08dc8c8e589ce37b217535a42af924f0e4d602205c9ba9cb14ef15513c9d946fa1c4b797883e748e8c32171bdf6166583946e35c012103dae30a4d7870cd87b45dd53e6012f71318fdd059c1c2623b8cc73f8af287bb2dfeffffff021dc4260c010000001976a914f602e88b2b5901d8aab15ebe4a97cf92ec6e03b388ac00e1f505000000001976a914687ffeffe8cf4e4c038da46a9b1d37db385a472d88acfd211500").unwrap()).unwrap();
 

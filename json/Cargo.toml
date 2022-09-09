@@ -1,6 +1,6 @@
 [package]
 name = "groestlcoincore-rpc-json"
-version = "0.15.0"
+version = "0.16.0"
 authors = ["Groestlcoin Developers <groestlcoin@gmail.com>"]
 license = "CC0-1.0"
 homepage = "https://github.com/Groestlcoin/rust-groestlcoincore-rpc/"
@@ -8,6 +8,7 @@ repository = "https://github.com/Groestlcoin/rust-groestlcoincore-rpc/"
 description = "JSON-enabled type structs for groestlcoincore-rpc crate."
 keywords = [ "crypto", "groestlcoin", "groestlcoin-core", "rpc" ]
 readme = "README.md"
+edition = "2018"
 
 [lib]
 name = "groestlcoincore_rpc_json"
@@ -17,4 +18,4 @@ path = "src/lib.rs"
 serde = { version = "1", features = [ "derive" ] }
 serde_json = "1"
 
-groestlcoin = { version = "0.28.0", features = [ "use-serde" ] }
+groestlcoin = { version = "0.29.0", features = ["serde"]}

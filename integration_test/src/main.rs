@@ -10,11 +10,8 @@
 
 #![deny(unused)]
 
-extern crate groestlcoin;
-extern crate groestlcoincore_rpc;
 #[macro_use]
 extern crate lazy_static;
-extern crate log;
 
 use std::collections::HashMap;
 
@@ -22,18 +19,18 @@ use groestlcoincore_rpc::json;
 use groestlcoincore_rpc::jsonrpc::error::Error as JsonRpcError;
 use groestlcoincore_rpc::{Auth, Client, Error, RpcApi};
 
+use crate::json::BlockStatsFields as BsFields;
 use groestlcoin::consensus::encode::{deserialize, serialize};
 use groestlcoin::hashes::hex::{FromHex, ToHex};
 use groestlcoin::hashes::Hash;
 use groestlcoin::secp256k1;
 use groestlcoin::{
-    Address, Amount, Network, OutPoint, PrivateKey, Script, EcdsaSighashType, SignedAmount, Transaction,
-    TxIn, TxOut, Txid, Witness,
+    Address, Amount, PackedLockTime, Network, OutPoint, PrivateKey, Script, EcdsaSighashType, SignedAmount,
+    Sequence, Transaction, TxIn, TxOut, Txid, Witness,
 };
 use groestlcoincore_rpc::groestlcoincore_rpc_json::{
     GetBlockTemplateModes, GetBlockTemplateRules, ScanTxOutRequest,
 };
-use json::BlockStatsFields as BsFields;
 
 lazy_static! {
     static ref SECP: secp256k1::Secp256k1<secp256k1::All> = secp256k1::Secp256k1::new();
@@ -551,18 +548,18 @@ fn test_sign_raw_transaction_with_send_raw_transaction(cl: &Client) {
 
     let tx = Transaction {
         version: 1,
-        lock_time: 0,
+        lock_time: PackedLockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint {
                 txid: unspent.txid,
                 vout: unspent.vout,
             },
-            sequence: 0xFFFFFFFF,
+            sequence: Sequence::MAX,
             script_sig: Script::new(),
             witness: Witness::new(),
         }],
         output: vec![TxOut {
-            value: (unspent.amount - *FEE).as_sat(),
+            value: (unspent.amount - *FEE).to_sat(),
             script_pubkey: addr.script_pubkey(),
         }],
     };
@@ -580,24 +577,25 @@ fn test_sign_raw_transaction_with_send_raw_transaction(cl: &Client) {
 
     let tx = Transaction {
         version: 1,
-        lock_time: 0,
+        lock_time: PackedLockTime::ZERO,
         input: vec![TxIn {
             previous_output: OutPoint {
                 txid: txid,
                 vout: 0,
             },
             script_sig: Script::new(),
-            sequence: 0xFFFFFFFF,
+            sequence: Sequence::MAX,
             witness: Witness::new(),
         }],
         output: vec![TxOut {
-            value: (unspent.amount - *FEE - *FEE).as_sat(),
+            value: (unspent.amount - *FEE - *FEE).to_sat(),
             script_pubkey: RANDOM_ADDRESS.script_pubkey(),
         }],
     };
 
-    let res =
-        cl.sign_raw_transaction_with_key(&tx, &[sk], None, Some(EcdsaSighashType::All.into())).unwrap();
+    let res = cl
+        .sign_raw_transaction_with_key(&tx, &[sk], None, Some(EcdsaSighashType::All.into()))
+        .unwrap();
     assert!(res.complete);
     let _ = cl.send_raw_transaction(&res.transaction().unwrap()).unwrap();
 }
@@ -1030,7 +1028,7 @@ fn test_create_wallet(cl: &Client) {
 }
 
 fn test_get_tx_out_set_info(cl: &Client) {
-    cl.get_tx_out_set_info().unwrap();
+    cl.get_tx_out_set_info(None, None, None).unwrap();
 }
 
 fn test_get_chain_tips(cl: &Client) {
@@ -1081,11 +1079,7 @@ fn test_add_ban(cl: &Client) {
     let res = cl.list_banned().unwrap();
     assert_eq!(res.len(), 0);
 
-    assert_error_message!(
-        cl.add_ban("INVALID_STRING", 0, false),
-        -30,
-        "Error: Invalid IP/Subnet"
-    );
+    assert_error_message!(cl.add_ban("INVALID_STRING", 0, false), -30, "Error: Invalid IP/Subnet");
 }
 
 fn test_set_network_active(cl: &Client) {
