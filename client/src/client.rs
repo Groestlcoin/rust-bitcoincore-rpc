@@ -1163,8 +1163,8 @@ pub trait RpcApi: Sized {
     }
 
     /// Submit a block
-    fn submit_block(&self, block: &bitcoin::Block) -> Result<()> {
-        let block_hex: String = bitcoin::consensus::encode::serialize_hex(block);
+    fn submit_block(&self, block: &groestlcoin::Block) -> Result<()> {
+        let block_hex: String = groestlcoin::consensus::encode::serialize_hex(block);
         self.submit_block_hex(&block_hex)
     }
 
