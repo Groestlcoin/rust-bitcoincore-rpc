@@ -27,6 +27,8 @@ pub extern crate jsonrpc;
 pub extern crate groestlcoincore_rpc_json;
 pub use crate::json::groestlcoin;
 pub use groestlcoincore_rpc_json as json;
+use json::groestlcoin::consensus::{Decodable, ReadExt};
+use json::groestlcoin::hashes::hex::HexIterator;
 
 mod client;
 mod error;
@@ -35,3 +37,13 @@ mod queryable;
 pub use crate::client::*;
 pub use crate::error::Error;
 pub use crate::queryable::*;
+
+fn deserialize_hex<T: Decodable>(hex: &str) -> Result<T> {
+    let mut reader = HexIterator::new(&hex)?;
+    let object = Decodable::consensus_decode(&mut reader)?;
+    if reader.read_u8().is_ok() {
+        Err(Error::BitcoinSerialization(groestlcoin::consensus::encode::Error::ParseFailed("data not consumed entirely when explicitly deserializing")))
+    } else {
+        Ok(object)
+    }
+}
