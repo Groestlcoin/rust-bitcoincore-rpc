@@ -881,6 +881,13 @@ pub trait RpcApi: Sized {
         self.call("getrawmempool", &[])
     }
 
+    /// Get details for the transactions in a memory pool
+    fn get_raw_mempool_verbose(
+        &self,
+    ) -> Result<HashMap<bitcoin::Txid, json::GetMempoolEntryResult>> {
+        self.call("getrawmempool", &[into_json(true)?])
+    }
+
     /// Get mempool data for given transaction
     fn get_mempool_entry(&self, txid: &groestlcoin::Txid) -> Result<json::GetMempoolEntryResult> {
         self.call("getmempoolentry", &[into_json(txid)?])
@@ -1101,6 +1108,10 @@ pub trait RpcApi: Sized {
 
     fn get_descriptor_info(&self, desc: &str) -> Result<json::GetDescriptorInfoResult> {
         self.call("getdescriptorinfo", &[desc.to_string().into()])
+    }
+
+    fn join_psbt(&self, psbts: &[String]) -> Result<String> {
+        self.call("joinpsbts", &[into_json(psbts)?])
     }
 
     fn combine_psbt(&self, psbts: &[String]) -> Result<String> {
