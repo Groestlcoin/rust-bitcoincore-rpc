@@ -34,8 +34,10 @@ use crate::queryable;
 /// crate-specific Error type;
 pub type Result<T> = result::Result<T, Error>;
 
+/// Outpoint that serializes and deserializes as a map, instead of a string,
+/// for use as RPC arguments
 #[derive(Clone, Debug, Serialize, Deserialize)]
-struct JsonOutPoint {
+pub struct JsonOutPoint {
     pub txid: groestlcoin::Txid,
     pub vout: u32,
 }
@@ -658,6 +660,14 @@ pub trait RpcApi: Sized {
         self.call("importmulti", handle_defaults(&mut args, &[null()]))
     }
 
+    fn import_descriptors(
+        &self,
+        req: json::ImportDescriptors,
+    ) -> Result<Vec<json::ImportMultiResult>> {
+        let json_request = vec![serde_json::to_value(req)?];
+        self.call("importdescriptors", handle_defaults(&mut [json_request.into()], &[null()]))
+    }
+
     fn set_label(&self, address: &Address, label: &str) -> Result<()> {
         self.call("setlabel", &[address.to_string().into(), label.into()])
     }
@@ -725,6 +735,27 @@ pub trait RpcApi: Sized {
         self.call("listreceivedbyaddress", handle_defaults(&mut args, &defaults))
     }
 
+    fn create_psbt(
+        &self,
+        inputs: &[json::CreateRawTransactionInput],
+        outputs: &HashMap<String, Amount>,
+        locktime: Option<i64>,
+        replaceable: Option<bool>,
+    ) -> Result<String> {
+        let outs_converted = serde_json::Map::from_iter(
+            outputs.iter().map(|(k, v)| (k.clone(), serde_json::Value::from(v.to_btc()))),
+        );
+        self.call(
+            "createpsbt",
+            &[
+                into_json(inputs)?,
+                into_json(outs_converted)?,
+                into_json(locktime)?,
+                into_json(replaceable)?,
+            ],
+        )
+    }
+
     fn create_raw_transaction_hex(
         &self,
         utxos: &[json::CreateRawTransactionInput],
@@ -754,6 +785,16 @@ pub trait RpcApi: Sized {
     ) -> Result<Transaction> {
         let hex: String = self.create_raw_transaction_hex(utxos, outs, locktime, replaceable)?;
         deserialize_hex(&hex)
+    }
+
+    fn decode_raw_transaction<R: RawTx>(
+        &self,
+        tx: R,
+        is_witness: Option<bool>,
+    ) -> Result<json::DecodeRawTransactionResult> {
+        let mut args = [tx.raw_hex().into(), opt_into_json(is_witness)?];
+        let defaults = [null()];
+        self.call("decoderawtransaction", handle_defaults(&mut args, &defaults))
     }
 
     fn fund_raw_transaction<R: RawTx>(
@@ -845,6 +886,11 @@ pub trait RpcApi: Sized {
         self.call("getnewaddress", &[opt_into_json(label)?, opt_into_json(address_type)?])
     }
 
+    /// Generate new address for receiving change
+    fn get_raw_change_address(&self, address_type: Option<json::AddressType>) -> Result<Address> {
+        self.call("getrawchangeaddress", &[opt_into_json(address_type)?])
+    }
+
     fn get_address_info(&self, address: &Address) -> Result<json::GetAddressInfoResult> {
         self.call("getaddressinfo", &[address.to_string().into()])
     }
@@ -874,6 +920,11 @@ pub trait RpcApi: Sized {
     /// Mark a block as valid by `block_hash`
     fn reconsider_block(&self, block_hash: &groestlcoin::BlockHash) -> Result<()> {
         self.call("reconsiderblock", &[into_json(block_hash)?])
+    }
+
+    /// Returns details on the active state of the TX memory pool
+    fn get_mempool_info(&self) -> Result<json::GetMempoolInfoResult> {
+        self.call("getmempoolinfo", &[])
     }
 
     /// Get txids of all transactions in a memory pool
@@ -1116,6 +1167,10 @@ pub trait RpcApi: Sized {
 
     fn combine_psbt(&self, psbts: &[String]) -> Result<String> {
         self.call("combinepsbt", &[into_json(psbts)?])
+    }
+
+    fn combine_raw_transaction(&self, hex_strings: &[String]) -> Result<String> {
+        self.call("combinerawtransaction", &[into_json(hex_strings)?])
     }
 
     fn finalize_psbt(&self, psbt: &str, extract: Option<bool>) -> Result<json::FinalizePsbtResult> {

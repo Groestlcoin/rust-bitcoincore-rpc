@@ -136,6 +136,7 @@ fn main() {
     test_get_mining_info(&cl);
     test_get_blockchain_info(&cl);
     test_get_new_address(&cl);
+    test_get_raw_change_address(&cl);
     test_dump_private_key(&cl);
     test_generate(&cl);
     test_get_balance_generate_to_address(&cl);
@@ -169,12 +170,15 @@ fn main() {
     test_invalidate_block_reconsider_block(&cl);
     test_key_pool_refill(&cl);
     test_create_raw_transaction(&cl);
+    test_decode_raw_transaction(&cl);
     test_fund_raw_transaction(&cl);
     test_test_mempool_accept(&cl);
     test_wallet_create_funded_psbt(&cl);
     test_wallet_process_psbt(&cl);
     test_join_psbt(&cl);
     test_combine_psbt(&cl);
+    test_combine_raw_transaction(&cl);
+    test_create_psbt(&cl);
     test_finalize_psbt(&cl);
     test_list_received_by_address(&cl);
     test_scantxoutset(&cl);
@@ -236,6 +240,17 @@ fn test_get_new_address(cl: &Client) {
 
     let addr = cl.get_new_address(None, Some(json::AddressType::P2shSegwit)).unwrap();
     assert_eq!(addr.address_type(), Some(groestlcoin::AddressType::P2sh));
+}
+
+fn test_get_raw_change_address(cl: &Client) {
+    let addr = cl.get_raw_change_address(Some(json::AddressType::Legacy)).unwrap();
+    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2pkh));
+
+    let addr = cl.get_raw_change_address(Some(json::AddressType::Bech32)).unwrap();
+    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2wpkh));
+
+    let addr = cl.get_raw_change_address(Some(json::AddressType::P2shSegwit)).unwrap();
+    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2sh));
 }
 
 fn test_dump_private_key(cl: &Client) {
@@ -644,6 +659,35 @@ fn test_create_raw_transaction(cl: &Client) {
     assert_eq!(hex, serialize(&tx).to_hex());
 }
 
+fn test_decode_raw_transaction(cl: &Client) {
+    let options = json::ListUnspentQueryOptions {
+        minimum_amount: Some(btc(2)),
+        ..Default::default()
+    };
+    let unspent = cl.list_unspent(Some(6), None, None, None, Some(options)).unwrap();
+    let unspent = unspent.into_iter().nth(0).unwrap();
+
+    let input = json::CreateRawTransactionInput {
+        txid: unspent.txid,
+        vout: unspent.vout,
+        sequence: None,
+    };
+    let mut output = HashMap::new();
+    output.insert(RANDOM_ADDRESS.to_string(), btc(1));
+
+    let tx =
+        cl.create_raw_transaction(&[input.clone()], &output, Some(500_000), Some(true)).unwrap();
+    let hex = cl.create_raw_transaction_hex(&[input], &output, Some(500_000), Some(true)).unwrap();
+
+    let decoded_transaction = cl.decode_raw_transaction(hex, None).unwrap();
+
+    assert_eq!(tx.txid(), decoded_transaction.txid);
+    assert_eq!(500_000, decoded_transaction.locktime);
+
+    assert_eq!(decoded_transaction.vin[0].txid.unwrap(), unspent.txid);
+    assert_eq!(decoded_transaction.vout[0].clone().value, btc(1));
+}
+
 fn test_fund_raw_transaction(cl: &Client) {
     let addr = cl.get_new_address(None, None).unwrap();
     let mut output = HashMap::new();
@@ -846,6 +890,46 @@ fn test_combine_psbt(cl: &Client) {
 
     let psbt = cl.combine_psbt(&[psbt1.psbt.clone(), psbt1.psbt]).unwrap();
     assert!(!psbt.is_empty());
+}
+
+fn test_combine_raw_transaction(cl: &Client) {
+    let options = json::ListUnspentQueryOptions {
+        minimum_amount: Some(btc(2)),
+        ..Default::default()
+    };
+    let unspent = cl.list_unspent(Some(6), None, None, None, Some(options)).unwrap();
+    let unspent = unspent.into_iter().nth(0).unwrap();
+    let input = json::CreateRawTransactionInput {
+        txid: unspent.txid,
+        vout: unspent.vout,
+        sequence: None,
+    };
+    let mut output = HashMap::new();
+    output.insert(RANDOM_ADDRESS.to_string(), btc(1));
+    let tx = cl.create_raw_transaction_hex(&[input.clone()], &output, Some(500_000), None).unwrap();
+
+    let transaction = cl.combine_raw_transaction(&[tx.clone(), tx]).unwrap();
+
+    assert!(!transaction.is_empty());
+}
+
+fn test_create_psbt(cl: &Client) {
+    let options = json::ListUnspentQueryOptions {
+        minimum_amount: Some(btc(2)),
+        ..Default::default()
+    };
+    let unspent = cl.list_unspent(Some(6), None, None, None, Some(options)).unwrap();
+    let unspent = unspent.into_iter().nth(0).unwrap();
+
+    let input = json::CreateRawTransactionInput {
+        txid: unspent.txid,
+        vout: unspent.vout,
+        sequence: None,
+    };
+    let mut output = HashMap::new();
+    output.insert(RANDOM_ADDRESS.to_string(), btc(1));
+
+    let _ = cl.create_psbt(&[input], &output, Some(500_000), Some(true)).unwrap();
 }
 
 fn test_finalize_psbt(cl: &Client) {
