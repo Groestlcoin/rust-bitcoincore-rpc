@@ -1056,19 +1056,19 @@ pub struct GetMempoolInfoResult {
     /// Total memory usage for the mempool
     pub usage: usize,
     /// Total fees for the mempool in BTC, ignoring modified fees through prioritisetransaction
-    #[serde(with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(with = "groestlcoin::util::amount::serde::as_btc")]
     pub total_fee: Amount,
     /// Maximum memory usage for the mempool
     #[serde(rename = "maxmempool")]
     pub max_mempool: usize,
     /// Minimum fee rate in BTC/kvB for tx to be accepted. Is the maximum of minrelaytxfee and minimum mempool fee
-    #[serde(rename = "mempoolminfee", with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(rename = "mempoolminfee", with = "groestlcoin::util::amount::serde::as_btc")]
     pub mempool_min_fee: Amount,
     /// Current minimum relay fee for transactions
-    #[serde(rename = "minrelaytxfee", with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(rename = "minrelaytxfee", with = "groestlcoin::util::amount::serde::as_btc")]
     pub min_relay_tx_fee: Amount,
     /// Minimum fee rate increment for mempool limiting or replacement in BTC/kvB
-    #[serde(rename = "incrementalrelayfee", with = "bitcoin::util::amount::serde::as_btc")]
+    #[serde(rename = "incrementalrelayfee", with = "groestlcoin::util::amount::serde::as_btc")]
     pub incremental_relay_fee: Amount,
     /// Current number of transactions that haven't passed initial broadcast yet
     #[serde(rename = "unbroadcastcount")]
@@ -1753,8 +1753,8 @@ pub struct FinalizePsbtResult {
 /// Model for decode transaction
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct DecodeRawTransactionResult {
-    pub txid: bitcoin::Txid,
-    pub hash: bitcoin::Wtxid,
+    pub txid: groestlcoin::Txid,
+    pub hash: groestlcoin::Wtxid,
     pub size: u32,
     pub vsize: u32,
     pub weight: u32,
