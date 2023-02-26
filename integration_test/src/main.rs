@@ -244,13 +244,13 @@ fn test_get_new_address(cl: &Client) {
 
 fn test_get_raw_change_address(cl: &Client) {
     let addr = cl.get_raw_change_address(Some(json::AddressType::Legacy)).unwrap();
-    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2pkh));
+    assert_eq!(addr.address_type(), Some(groestlcoin::AddressType::P2pkh));
 
     let addr = cl.get_raw_change_address(Some(json::AddressType::Bech32)).unwrap();
-    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2wpkh));
+    assert_eq!(addr.address_type(), Some(groestlcoin::AddressType::P2wpkh));
 
     let addr = cl.get_raw_change_address(Some(json::AddressType::P2shSegwit)).unwrap();
-    assert_eq!(addr.address_type(), Some(bitcoin::AddressType::P2sh));
+    assert_eq!(addr.address_type(), Some(groestlcoin::AddressType::P2sh));
 }
 
 fn test_dump_private_key(cl: &Client) {
