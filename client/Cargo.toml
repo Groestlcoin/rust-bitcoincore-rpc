@@ -23,4 +23,4 @@ jsonrpc = "0.13.0"
 # Used for deserialization of JSON.
 serde = "1"
 serde_json = "1"
-bitcoin-private = "0.1.0"
+groestlcoin-private = "0.1.0"
