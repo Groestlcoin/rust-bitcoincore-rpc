@@ -15,14 +15,16 @@ use std::path::PathBuf;
 use std::{fmt, result};
 
 use crate::{groestlcoin, deserialize_hex};
+use groestlcoin_private::hex::exts::DisplayHex;
 use jsonrpc;
 use serde;
 use serde_json;
 
-use crate::groestlcoin::hashes::hex::{FromHex, ToHex};
+use crate::groestlcoin::address::{NetworkUnchecked, NetworkChecked};
+use crate::groestlcoin::hashes::hex::FromHex;
 use crate::groestlcoin::secp256k1::ecdsa::Signature;
 use crate::groestlcoin::{
-    Address, Amount, Block, BlockHeader, OutPoint, PrivateKey, PublicKey, Script, Transaction,
+    Address, Amount, Block, OutPoint, PrivateKey, PublicKey, Script, Transaction,
 };
 use log::Level::{Debug, Trace, Warn};
 
@@ -160,19 +162,19 @@ pub trait RawTx: Sized + Clone {
 
 impl<'a> RawTx for &'a Transaction {
     fn raw_hex(self) -> String {
-        groestlcoin::consensus::encode::serialize(self).to_hex()
+        groestlcoin::consensus::encode::serialize_hex(self)
     }
 }
 
 impl<'a> RawTx for &'a [u8] {
     fn raw_hex(self) -> String {
-        self.to_hex()
+        self.to_lower_hex_string()
     }
 }
 
 impl<'a> RawTx for &'a Vec<u8> {
     fn raw_hex(self) -> String {
-        self.to_hex()
+        self.to_lower_hex_string()
     }
 }
 
@@ -270,7 +272,7 @@ pub trait RpcApi: Sized {
         self.call("loadwallet", &[wallet.into()])
     }
 
-    fn unload_wallet(&self, wallet: Option<&str>) -> Result<()> {
+    fn unload_wallet(&self, wallet: Option<&str>) -> Result<Option<json::UnloadWalletResult>> {
         let mut args = [opt_into_json(wallet)?];
         self.call("unloadwallet", handle_defaults(&mut args, &[null()]))
     }
@@ -345,7 +347,7 @@ pub trait RpcApi: Sized {
     }
     //TODO(stevenroose) add getblock_txs
 
-    fn get_block_header(&self, hash: &groestlcoin::BlockHash) -> Result<BlockHeader> {
+    fn get_block_header(&self, hash: &groestlcoin::BlockHash) -> Result<groestlcoin::block::Header> {
         let hex: String = self.call("getblockheader", &[into_json(hash)?, false.into()])?;
         deserialize_hex(&hex)
     }
@@ -640,7 +642,7 @@ pub trait RpcApi: Sized {
         p2sh: Option<bool>,
     ) -> Result<()> {
         let mut args = [
-            script.to_hex().into(),
+            script.to_hex_string().into(),
             opt_into_json(label)?,
             opt_into_json(rescan)?,
             opt_into_json(p2sh)?,
@@ -685,7 +687,7 @@ pub trait RpcApi: Sized {
         &self,
         minconf: Option<usize>,
         maxconf: Option<usize>,
-        addresses: Option<&[&Address]>,
+        addresses: Option<&[&Address<NetworkChecked>]>,
         include_unsafe: Option<bool>,
         query_options: Option<json::ListUnspentQueryOptions>,
     ) -> Result<Vec<json::ListUnspentResultEntry>> {
@@ -886,12 +888,12 @@ pub trait RpcApi: Sized {
         &self,
         label: Option<&str>,
         address_type: Option<json::AddressType>,
-    ) -> Result<Address> {
+    ) -> Result<Address<NetworkUnchecked>> {
         self.call("getnewaddress", &[opt_into_json(label)?, opt_into_json(address_type)?])
     }
 
     /// Generate new address for receiving change
-    fn get_raw_change_address(&self, address_type: Option<json::AddressType>) -> Result<Address> {
+    fn get_raw_change_address(&self, address_type: Option<json::AddressType>) -> Result<Address<NetworkUnchecked>> {
         self.call("getrawchangeaddress", &[opt_into_json(address_type)?])
     }
 
@@ -905,7 +907,7 @@ pub trait RpcApi: Sized {
     fn generate_to_address(
         &self,
         block_num: u64,
-        address: &Address,
+        address: &Address<NetworkChecked>,
     ) -> Result<Vec<groestlcoin::BlockHash>> {
         self.call("generatetoaddress", &[block_num.into(), address.to_string().into()])
     }
@@ -956,7 +958,7 @@ pub trait RpcApi: Sized {
 
     fn send_to_address(
         &self,
-        address: &Address,
+        address: &Address<NetworkChecked>,
         amount: Amount,
         comment: Option<&str>,
         comment_to: Option<&str>,
@@ -1155,7 +1157,7 @@ pub trait RpcApi: Sized {
         ];
         let defaults = [
             true.into(),
-            into_json(json::SigHashType::from(groestlcoin::EcdsaSighashType::All))?,
+            into_json(json::SigHashType::from(groestlcoin::sighash::EcdsaSighashType::All))?,
             true.into(),
         ];
         self.call("walletprocesspsbt", handle_defaults(&mut args, &defaults))
@@ -1182,7 +1184,7 @@ pub trait RpcApi: Sized {
         self.call("finalizepsbt", handle_defaults(&mut args, &[true.into()]))
     }
 
-    fn derive_addresses(&self, descriptor: &str, range: Option<[u32; 2]>) -> Result<Vec<Address>> {
+    fn derive_addresses(&self, descriptor: &str, range: Option<[u32; 2]>) -> Result<Vec<Address<NetworkUnchecked>>> {
         let mut args = [into_json(descriptor)?, opt_into_json(range)?];
         self.call("deriveaddresses", handle_defaults(&mut args, &[null()]))
     }
@@ -1242,7 +1244,7 @@ pub trait RpcApi: Sized {
 
     /// Submit a raw block
     fn submit_block_bytes(&self, block_bytes: &[u8]) -> Result<()> {
-        let block_hex: String = block_bytes.to_hex();
+        let block_hex: String = block_bytes.to_lower_hex_string();
         self.submit_block_hex(&block_hex)
     }
 

@@ -22,7 +22,7 @@ pub trait Queryable<C: RpcApi>: Sized {
     fn query(rpc: &C, id: &Self::Id) -> Result<Self>;
 }
 
-impl<C: RpcApi> Queryable<C> for groestlcoin::blockdata::block::Block {
+impl<C: RpcApi> Queryable<C> for groestlcoin::block::Block {
     type Id = groestlcoin::BlockHash;
 
     fn query(rpc: &C, id: &Self::Id) -> Result<Self> {
@@ -33,7 +33,7 @@ impl<C: RpcApi> Queryable<C> for groestlcoin::blockdata::block::Block {
     }
 }
 
-impl<C: RpcApi> Queryable<C> for groestlcoin::blockdata::transaction::Transaction {
+impl<C: RpcApi> Queryable<C> for groestlcoin::transaction::Transaction {
     type Id = groestlcoin::Txid;
 
     fn query(rpc: &C, id: &Self::Id) -> Result<Self> {
