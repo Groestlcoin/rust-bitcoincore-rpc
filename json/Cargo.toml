@@ -1,6 +1,6 @@
 [package]
 name = "groestlcoincore-rpc-json"
-version = "0.16.0"
+version = "0.16.5"
 authors = ["Groestlcoin Developers <groestlcoin@gmail.com>"]
 license = "CC0-1.0"
 homepage = "https://github.com/Groestlcoin/rust-groestlcoincore-rpc/"
