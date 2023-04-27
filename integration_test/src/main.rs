@@ -108,6 +108,10 @@ fn sbtc<F: Into<f64>>(btc: F) -> SignedAmount {
     SignedAmount::from_btc(btc.into()).unwrap()
 }
 
+fn get_testdir() -> String {
+    return std::env::var("TESTDIR").expect("TESTDIR must be set");
+}
+
 fn get_rpc_url() -> String {
     return std::env::var("RPC_URL").expect("RPC_URL must be set");
 }
@@ -203,17 +207,17 @@ fn main() {
     test_uptime(&cl);
     test_getblocktemplate(&cl);
     test_unloadwallet(&cl);
+    test_loadwallet(&cl);
+    test_backupwallet(&cl);
+    test_wait_for_new_block(&cl);
+    test_wait_for_block(&cl);
+    test_get_descriptor_info(&cl);
+    test_derive_addresses(&cl);
     //TODO import_multi(
     //TODO verify_message(
-    //TODO wait_for_new_block(&self, timeout: u64) -> Result<json::BlockRef> {
-    //TODO wait_for_block(
-    //TODO get_descriptor_info(&self, desc: &str) -> Result<json::GetDescriptorInfoResult> {
-    //TODO derive_addresses(&self, descriptor: &str, range: Option<[u32; 2]>) -> Result<Vec<Address>> {
     //TODO encrypt_wallet(&self, passphrase: &str) -> Result<()> {
     //TODO get_by_id<T: queryable::Queryable<Self>>(
     //TODO add_multisig_address(
-    //TODO load_wallet(&self, wallet: &str) -> Result<json::LoadWalletResult> {
-    //TODO backup_wallet(&self, destination: Option<&str>) -> Result<()> {
     test_add_node(&cl);
     test_get_added_node_info(&cl);
     test_get_node_addresses(&cl);
@@ -234,7 +238,7 @@ fn test_get_mining_info(cl: &Client) {
 
 fn test_get_blockchain_info(cl: &Client) {
     let info = cl.get_blockchain_info().unwrap();
-    assert_eq!(&info.chain, "regtest");
+    assert_eq!(info.chain, Network::Regtest);
 }
 
 fn test_get_new_address(cl: &Client) {
@@ -1280,6 +1284,80 @@ fn test_unloadwallet(cl: &Client) {
     } else {
         assert!(res.is_none());
     }
+}
+
+fn test_loadwallet(_: &Client) {
+    let wallet_name = "testloadwallet";
+    let wallet_client = new_wallet_client(wallet_name);
+
+    assert!(wallet_client.load_wallet(wallet_name).is_err());
+    wallet_client.create_wallet(wallet_name, None, None, None, None).unwrap();
+    assert!(wallet_client.load_wallet(wallet_name).is_err());
+    wallet_client.unload_wallet(None).unwrap();
+
+    let res = wallet_client.load_wallet(wallet_name).unwrap();
+    assert_eq!(res.name, wallet_name);
+    assert_eq!(res.warning, Some("".into()));
+}
+
+fn test_backupwallet(_: &Client) {
+    let wallet_client = new_wallet_client("testbackupwallet");
+    let backup_path = format!("{}/testbackupwallet.dat", get_testdir());
+
+    assert!(wallet_client.backup_wallet(None).is_err());
+    assert!(wallet_client.backup_wallet(Some(&backup_path)).is_err());
+    wallet_client.create_wallet("testbackupwallet", None, None, None, None).unwrap();
+    assert!(wallet_client.backup_wallet(None).is_err());
+    assert!(wallet_client.backup_wallet(Some(&backup_path)).is_ok());
+}
+
+fn test_wait_for_new_block(cl: &Client) {
+    let height = cl.get_block_count().unwrap();
+    let hash = cl.get_block_hash(height).unwrap();
+
+    assert!(cl.wait_for_new_block(std::u64::MAX).is_err()); // JSON integer out of range
+    assert_eq!(cl.wait_for_new_block(100).unwrap(), json::BlockRef{hash, height});
+}
+
+fn test_wait_for_block(cl: &Client) {
+    let height = cl.get_block_count().unwrap();
+    let hash = cl.get_block_hash(height).unwrap();
+
+    assert!(cl.wait_for_block(&hash, std::u64::MAX).is_err()); // JSON integer out of range
+    assert_eq!(cl.wait_for_block(&hash, 0).unwrap(), json::BlockRef{hash, height});
+}
+
+fn test_get_descriptor_info(cl: &Client) {
+    let res = cl.get_descriptor_info(r"pkh(cSQPHDBwXGjVzWRqAHm6zfvQhaTuj1f2bFH58h55ghbjtFwvmeXR)").unwrap();
+    assert_eq!(res.descriptor, r"pkh(02e96fe52ef0e22d2f131dd425ce1893073a3c6ad20e8cac36726393dfb4856a4c)#62k9sn4x");
+    assert_eq!(res.is_range, false);
+    assert_eq!(res.is_solvable, true);
+    assert_eq!(res.has_private_keys, true);
+
+    // Checksum introduced in: https://github.com/bitcoin/bitcoin/commit/26d3fad1093dfc697048313be7a96c9adf723654
+    if version() >= 190000 {
+        assert_eq!(res.checksum, Some("37v3lm8x".to_string()));
+    } else {
+        assert!(res.checksum.is_none());
+    }
+
+    assert!(cl.get_descriptor_info("abcdef").is_err());
+}
+
+fn test_derive_addresses(cl: &Client) {
+    let descriptor = r"pkh(02e96fe52ef0e22d2f131dd425ce1893073a3c6ad20e8cac36726393dfb4856a4c)#62k9sn4x";
+    assert_eq!(cl.derive_addresses(descriptor, None).unwrap(), vec!["mrkwtj5xpYQjHeJe5wsweNjVeTKkvR5fCr".parse().unwrap()]);
+    assert!(cl.derive_addresses(descriptor, Some([0, 1])).is_err()); // Range should not be specified for an unranged descriptor
+
+    let descriptor = std::concat!(
+        r"wpkh([1004658e/84'/1'/0']tpubDCBEcmVKbfC9KfdydyLbJ2gfNL88grZu1XcWSW9ytTM6fi",
+        r"tvaRmVyr8Ddf7SjZ2ZfMx9RicjYAXhuh3fmLiVLPodPEqnQQURUfrBKiiVZc8/0/*)#g8l47ngv",
+    );
+    assert_eq!(cl.derive_addresses(descriptor, Some([0, 1])).unwrap(), vec![
+        "bcrt1q5n5tjkpva8v5s0uadu2y5f0g7pn4h5eqaq2ux2".parse().unwrap(),
+        "bcrt1qcgl303ht03ja2e0hudpwk7ypcxk5t478wspzlt".parse().unwrap(),
+    ]);
+    assert!(cl.derive_addresses(descriptor, None).is_err()); // Range must be specified for a ranged descriptor
 }
 
 fn test_get_index_info(cl: &Client) {
