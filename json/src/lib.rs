@@ -29,7 +29,10 @@ use groestlcoin::block::Version;
 use groestlcoin::consensus::encode;
 use groestlcoin::hashes::hex::FromHex;
 use groestlcoin::hashes::sha256;
-use groestlcoin::{Address, Amount, PrivateKey, PublicKey, SignedAmount, Transaction, ScriptBuf, Script, bip158, bip32};
+use groestlcoin::{
+    bip158, bip32, Address, Amount, PrivateKey, PublicKey, Script, ScriptBuf, SignedAmount,
+    Transaction,
+};
 use serde::de::Error as SerdeError;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -51,7 +54,7 @@ pub mod serde_hex {
 
     pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<Vec<u8>, D::Error> {
         let hex_str: String = ::serde::Deserialize::deserialize(d)?;
-        Ok(FromHex::from_hex(&hex_str).map_err(D::Error::custom)?)
+        FromHex::from_hex(&hex_str).map_err(D::Error::custom)
     }
 
     pub mod opt {
@@ -132,6 +135,22 @@ pub struct AddMultiSigAddressResult {
 pub struct LoadWalletResult {
     pub name: String,
     pub warning: Option<String>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+pub struct Descriptor {
+    pub desc: String,
+    pub timestamp: Timestamp,
+    pub active: bool,
+    pub internal: Option<bool>,
+    pub range: Option<(u64, u64)>,
+    pub next: Option<u64>,
+}
+
+#[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
+pub struct ListDescriptorsResult {
+    pub wallet_name: String,
+    pub descriptors: Vec<Descriptor>,
 }
 
 #[derive(Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
@@ -643,7 +662,7 @@ impl GetRawTransactionResult {
     }
 
     pub fn transaction(&self) -> Result<Transaction, encode::Error> {
-        Ok(encode::deserialize(&self.hex)?)
+        encode::deserialize(&self.hex)
     }
 }
 
@@ -712,7 +731,7 @@ pub struct GetTransactionResult {
 
 impl GetTransactionResult {
     pub fn transaction(&self) -> Result<Transaction, encode::Error> {
-        Ok(encode::deserialize(&self.hex)?)
+        encode::deserialize(&self.hex)
     }
 }
 
@@ -825,7 +844,7 @@ pub struct SignRawTransactionResult {
 
 impl SignRawTransactionResult {
     pub fn transaction(&self) -> Result<Transaction, encode::Error> {
-        Ok(encode::deserialize(&self.hex)?)
+        encode::deserialize(&self.hex)
     }
 }
 
@@ -1149,7 +1168,7 @@ impl<'a> serde::Serialize for ImportMultiRequestScriptPubkey<'a> {
         S: serde::Serializer,
     {
         match *self {
-            ImportMultiRequestScriptPubkey::Address(ref addr) => {
+            ImportMultiRequestScriptPubkey::Address(addr) => {
                 #[derive(Serialize)]
                 struct Tmp<'a> {
                     pub address: &'a Address,
@@ -1406,8 +1425,6 @@ pub enum GetPeerInfoResultNetwork {
     Ipv4,
     Ipv6,
     Onion,
-    #[deprecated]
-    Unroutable,
     NotPubliclyRoutable,
     I2p,
     Cjdns,
