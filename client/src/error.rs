@@ -25,7 +25,7 @@ pub enum Error {
     BitcoinSerialization(groestlcoin::consensus::encode::Error),
     Secp256k1(secp256k1::Error),
     Io(io::Error),
-    InvalidAmount(groestlcoin::util::amount::ParseAmountError),
+    InvalidAmount(groestlcoin::amount::ParseAmountError),
     InvalidCookieFile,
     /// The JSON result had an unexpected structure.
     UnexpectedStructure,
@@ -69,8 +69,8 @@ impl From<io::Error> for Error {
     }
 }
 
-impl From<groestlcoin::util::amount::ParseAmountError> for Error {
-    fn from(e: groestlcoin::util::amount::ParseAmountError) -> Error {
+impl From<groestlcoin::amount::ParseAmountError> for Error {
+    fn from(e: groestlcoin::amount::ParseAmountError) -> Error {
         Error::InvalidAmount(e)
     }
 }
