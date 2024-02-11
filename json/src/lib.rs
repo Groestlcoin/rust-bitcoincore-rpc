@@ -41,8 +41,7 @@ use std::fmt;
 ///
 /// The module is compatible with the serde attribute.
 pub mod serde_hex {
-    use groestlcoin::hashes::hex::FromHex;
-    use groestlcoin_private::hex::exts::DisplayHex;
+    use groestlcoin::hex::{DisplayHex, FromHex};
     use serde::de::Error;
     use serde::{Deserializer, Serializer};
 
@@ -56,8 +55,7 @@ pub mod serde_hex {
     }
 
     pub mod opt {
-        use groestlcoin::hashes::hex::FromHex;
-        use groestlcoin_private::hex::exts::DisplayHex;
+        use groestlcoin::hex::{DisplayHex, FromHex};
         use serde::de::Error;
         use serde::{Deserializer, Serializer};
 
@@ -174,7 +172,7 @@ pub struct GetWalletInfoResult {
     #[serde(rename = "paytxfee", with = "groestlcoin::amount::serde::as_btc")]
     pub pay_tx_fee: Amount,
     #[serde(rename = "hdseedid")]
-    pub hd_seed_id: Option<groestlcoin::hash_types::XpubIdentifier>,
+    pub hd_seed_id: Option<groestlcoin::bip32::XKeyIdentifier>,
     pub private_keys_enabled: bool,
     pub avoid_reuse: Option<bool>,
     pub scanning: Option<ScanningDetails>,
@@ -944,7 +942,7 @@ pub struct GetAddressInfoResultEmbedded {
     #[serde(rename = "hdkeypath")]
     pub hd_key_path: Option<bip32::DerivationPath>,
     #[serde(rename = "hdseedid")]
-    pub hd_seed_id: Option<groestlcoin::hash_types::XpubIdentifier>,
+    pub hd_seed_id: Option<groestlcoin::bip32::XKeyIdentifier>,
     #[serde(default)]
     pub labels: Vec<GetAddressInfoResultLabel>,
 }
@@ -998,7 +996,7 @@ pub struct GetAddressInfoResult {
     #[serde(rename = "hdkeypath")]
     pub hd_key_path: Option<bip32::DerivationPath>,
     #[serde(rename = "hdseedid")]
-    pub hd_seed_id: Option<groestlcoin::hash_types::XpubIdentifier>,
+    pub hd_seed_id: Option<groestlcoin::bip32::XKeyIdentifier>,
     pub labels: Vec<GetAddressInfoResultLabel>,
     /// Deprecated in v2.20.1. See `labels` field instead.
     #[deprecated(note = "since Core v2.20.1")]

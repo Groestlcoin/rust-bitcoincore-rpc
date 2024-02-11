@@ -1,6 +1,6 @@
 [package]
 name = "groestlcoincore-rpc"
-version = "0.17.0"
+version = "0.18.0"
 authors = ["Groestlcoin Developers <groestlcoin@gmail.com>"]
 license = "CC0-1.0"
 homepage = "https://github.com/Groestlcoin/rust-groestlcoincore-rpc/"
@@ -15,7 +15,7 @@ name = "groestlcoincore_rpc"
 path = "src/lib.rs"
 
 [dependencies]
-groestlcoincore-rpc-json = { version = "0.17.0", path = "../json" }
+groestlcoincore-rpc-json = { version = "0.18.0", path = "../json" }
 
 log = "0.4.5"
 jsonrpc = "0.14.0"
@@ -23,4 +23,6 @@ jsonrpc = "0.14.0"
 # Used for deserialization of JSON.
 serde = "1"
 serde_json = "1"
-groestlcoin-private = "0.1.0"
+
+[dev-dependencies]
+tempfile = "3.3.0"
